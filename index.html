@@ -11,30 +11,10 @@
       padding: 20px;
       overflow: hidden;
     }
-    #container {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-    }
     #console {
       white-space: pre-wrap;
       font-size: 16px;
       line-height: 1.4;
-      flex: 1;
-    }
-    #avatar {
-      margin-left: 20px;
-    }
-    #avatar img {
-      max-width: 250px;
-      border: 3px solid cyan;
-      box-shadow: 0 0 15px cyan;
-      border-radius: 8px;
-      animation: glow 2s infinite alternate;
-    }
-    @keyframes glow {
-      from { box-shadow: 0 0 5px cyan; }
-      to   { box-shadow: 0 0 25px cyan; }
     }
     .glitch {
       color: red;
@@ -57,14 +37,7 @@
   </style>
 </head>
 <body>
-  <div id="container">
-    <div id="console"></div>
-    <div id="avatar">
-      <!-- 👇 This is your Roblox avatar image -->
-      <img src="https://raw.githubusercontent.com/prototype-Z/Roblox.com/main/frostcake.png" alt="Roblox Avatar">
-    </div>
-  </div>
-
+  <div id="console"></div>
   <script>
     const consoleDiv = document.getElementById("console");
 
