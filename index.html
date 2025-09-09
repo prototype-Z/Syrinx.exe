@@ -77,14 +77,13 @@
       let counter = seconds;
       const countdownInterval = setInterval(() => {
         if (counter > 0) {
-          consoleDiv.innerHTML += "Server shutdown in: " + counter + "...\n";
+          consoleDiv.innerHTML += "<span class='glitch'>Server shutdown in: " + counter + "...</span>\n";
           counter--;
         } else {
           clearInterval(countdownInterval);
           consoleDiv.innerHTML += "\n<span class='glitch'>>> DATABASE CORRUPTED — FILES WIPED <<<</span>\n";
           consoleDiv.innerHTML += "\n<span class='blink'>[ PRESS ANY KEY TO CONTINUE ]</span>";
 
-          // Enable fake loading screen after key press
           document.addEventListener("keydown", () => {
             fakeLoading();
           }, { once: true });
@@ -94,25 +93,50 @@
 
     function fakeLoading() {
       consoleDiv.innerHTML += "\n\nStarting final sequence...\n";
+
       let fakeLines = [
         "Decrypting core files...",
         "Overriding system locks...",
         "Finalizing termination...",
         "Cleaning up traces...",
-        "Redirecting..."
+        "Progress: "
       ];
       let j = 0;
+
       function typeFake() {
-        if (j < fakeLines.length) {
+        if (j < fakeLines.length - 1) {
           consoleDiv.innerHTML += fakeLines[j] + "\n";
           j++;
           setTimeout(typeFake, 1000);
         } else {
-          // Redirect after fake loading
-          window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; 
+          showProgressBar();
         }
       }
       typeFake();
+    }
+
+    function showProgressBar() {
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        let barLength = Math.floor(progress / 5); // 20 steps total
+        let bar = "[" + "█".repeat(barLength) + "░".repeat(20 - barLength) + "] " + progress + "%";
+        
+        // overwrite the last progress line
+        if (progress === 0) {
+          consoleDiv.innerHTML += bar + "\n";
+        } else {
+          consoleDiv.innerHTML = consoleDiv.innerHTML.replace(/(\[.*%\])/, bar);
+        }
+
+        progress += 5;
+
+        if (progress > 100) {
+          clearInterval(progressInterval);
+          setTimeout(() => {
+            window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+          }, 1000);
+        }
+      }, 200);
     }
 
     typeLine();
