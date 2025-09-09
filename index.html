@@ -30,6 +30,11 @@
       border: 3px solid cyan;
       box-shadow: 0 0 15px cyan;
       border-radius: 8px;
+      animation: glow 2s infinite alternate;
+    }
+    @keyframes glow {
+      from { box-shadow: 0 0 5px cyan; }
+      to   { box-shadow: 0 0 25px cyan; }
     }
     .glitch {
       color: red;
@@ -55,7 +60,8 @@
   <div id="container">
     <div id="console"></div>
     <div id="avatar">
-      <img src="d47a141d-ff15-47d1-84e5-dbdeb18d7b9d.png" alt="Roblox Avatar">
+      <!-- 👇 This is your Roblox avatar image -->
+      <img src="https://raw.githubusercontent.com/prototype-Z/Roblox.com/main/frostcake.png" alt="Roblox Avatar">
     </div>
   </div>
 
