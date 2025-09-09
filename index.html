@@ -44,6 +44,11 @@
     @keyframes blink {
       50% { opacity: 0; }
     }
+    .access {
+      color: lime;
+      font-weight: bold;
+      animation: blink 0.5s steps(1) 6; /* quick blinking effect */
+    }
   </style>
 </head>
 <body>
@@ -129,9 +134,13 @@
 
         if (progress >= 100) {
           clearInterval(progressInterval);
+
+          // Show fake "ACCESS GRANTED" before redirect
+          consoleDiv.innerHTML += "\n\n<span class='access'>>> ACCESS GRANTED — REDIRECTING <<<</span>\n";
+
           setTimeout(() => {
             window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-          }, 1000);
+          }, 2000); // 2 sec delay for dramatic effect
         }
       }, 50); // smooth animation (fills in ~5s)
     }
