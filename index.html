@@ -73,13 +73,36 @@
           clearInterval(countdownInterval);
           consoleDiv.innerHTML += "\n<span class='glitch'>ALL SERVERS TERMINATED.</span>\n";
           consoleDiv.innerHTML += "\n<span class='blink'>[ PRESS ANY KEY TO CONTINUE ]</span>";
-          
-          // Enable the redirect after countdown
+
+          // Enable fake loading screen after key press
           document.addEventListener("keydown", () => {
-            window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-          });
+            fakeLoading();
+          }, { once: true });
         }
       }, 1000);
+    }
+
+    function fakeLoading() {
+      consoleDiv.innerHTML += "\n\nStarting final sequence...\n";
+      let fakeLines = [
+        "Decrypting final files...",
+        "Overriding firewall...",
+        "Injecting final payload...",
+        "Loading YouTube exploit...",
+        "Redirecting..."
+      ];
+      let j = 0;
+      function typeFake() {
+        if (j < fakeLines.length) {
+          consoleDiv.innerHTML += fakeLines[j] + "\n";
+          j++;
+          setTimeout(typeFake, 1000);
+        } else {
+          // Redirect after fake loading
+          window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+        }
+      }
+      typeFake();
     }
 
     typeLine();
