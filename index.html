@@ -11,10 +11,25 @@
       padding: 20px;
       overflow: hidden;
     }
+    #container {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
     #console {
       white-space: pre-wrap;
       font-size: 16px;
       line-height: 1.4;
+      flex: 1;
+    }
+    #avatar {
+      margin-left: 20px;
+    }
+    #avatar img {
+      max-width: 250px;
+      border: 3px solid cyan;
+      box-shadow: 0 0 15px cyan;
+      border-radius: 8px;
     }
     .glitch {
       color: red;
@@ -37,7 +52,13 @@
   </style>
 </head>
 <body>
-  <div id="console"></div>
+  <div id="container">
+    <div id="console"></div>
+    <div id="avatar">
+      <img src="d47a141d-ff15-47d1-84e5-dbdeb18d7b9d.png" alt="Roblox Avatar">
+    </div>
+  </div>
+
   <script>
     const consoleDiv = document.getElementById("console");
 
@@ -99,7 +120,7 @@
           setTimeout(typeFake, 1000);
         } else {
           // Redirect after fake loading
-          window.location.href = "https://www.youtube.com/watch?v=nJmzgf9ygb8";
+          window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; 
         }
       }
       typeFake();
