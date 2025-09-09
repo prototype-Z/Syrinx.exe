@@ -73,15 +73,16 @@
           clearInterval(countdownInterval);
           consoleDiv.innerHTML += "\n<span class='glitch'>ALL SERVERS TERMINATED.</span>\n";
           consoleDiv.innerHTML += "\n<span class='blink'>[ PRESS ANY KEY TO CONTINUE ]</span>";
+          
+          // Enable the redirect after countdown
+          document.addEventListener("keydown", () => {
+            window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+          });
         }
       }, 1000);
     }
 
     typeLine();
-
-    document.addEventListener("keydown", () => {
-      alert("😂 You just got pranked bozo. Relax, Roblox is fine.");
-    });
   </script>
 </body>
 </html>
