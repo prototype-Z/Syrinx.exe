@@ -210,22 +210,22 @@
       next();
     }
 
-    // ✅ Skull appears immediately with gradient
-    function showSkull() {
-      const skull = `
-   ______
-.-'      \`-.
- /            \\
-|,  .-.  .-.  ,|
-| )(_ o/  \\\\ o_)( |
-|/     /\\\\     \\\\|
-(_     ^^     _)
- \\\\__|IIIIII|__/
-  | \\\\IIIIII/ |
-   \\\\  ====  /
-    \`--------\`
-`;
-      asciiBox.innerHTML = "<pre><span class='grad'>" + skull + "</span></pre>";
+    // ✅ Spider ASCII art appears immediately
+    function showAsciiArt() {
+      const art = `
+   +--^----------,--------,-----,--------^-, 
+   | |||||||||   \`--------'     |          O 
+   \`+---------------------------^----------| 
+     \\\\_,---------,---------,--------------' 
+       / XXXXXX /'|       /' 
+      / XXXXXX /  \`\\    /' 
+     / XXXXXX /\\\`-------' 
+    / XXXXXX / 
+   / XXXXXX / 
+  (________(                
+   \`------'   
+  `;
+      asciiBox.innerHTML = "<pre><span class='grad'>" + art + "</span></pre>";
       asciiBox.style.display = "block";
     }
 
@@ -239,7 +239,7 @@
     }
 
     // Start
-    showSkull(); // 🔥 show skull immediately
+    showAsciiArt(); // 🕷️ spider shows immediately
     typeIntro();
     startSpinner();
 
