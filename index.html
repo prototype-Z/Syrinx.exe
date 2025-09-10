@@ -24,11 +24,11 @@
       line-height: 1.4;
       text-align: left;
       max-width: 60ch;
-      background: rgba(0, 0, 0, 0.6); /* ✅ faint black box */
+      background: rgba(0, 0, 0, 0.6);
       border-radius: 6px;
     }
 
-    /* Gradient log lines (block so they stack) */
+    /* Gradient log lines */
     .grad {
       background: linear-gradient(90deg, #a020f0, #ff66cc, #a020f0);
       -webkit-background-clip: text;
@@ -53,7 +53,7 @@
       background: black;
     }
 
-    /* Special solid color styles */
+    /* Special styles */
     .glitch {
       color: red;
       -webkit-text-fill-color: red;
@@ -92,14 +92,39 @@
       display: block;
     }
     @keyframes blink { 50% { opacity: 0; } }
+
+    /* ✅ Purple ASCII art box */
+    #asciiBox {
+      position: fixed;
+      top: 50px;
+      right: 50px;
+      background: rgba(0,0,0,0.7);
+      border: 1px solid #a020f0; /* purple border */
+      color: #a020f0;            /* purple text */
+      font-family: monospace;
+      font-size: 16px;
+      padding: 10px;
+      display: none;
+      z-index: 2;
+      white-space: pre;
+      text-shadow: 2px 2px #4b0082, 4px 4px #2e003e; /* dark purple 3D shadow */
+      animation: asciiGlitch 0.2s infinite;
+    }
+    @keyframes asciiGlitch {
+      0% { text-shadow: 2px 2px #4b0082, 4px 4px #2e003e; }
+      50% { text-shadow: -2px 1px #4b0082, 3px -2px #2e003e; }
+      100% { text-shadow: 2px 2px #4b0082, 4px 4px #2e003e; }
+    }
   </style>
 </head>
 <body>
   <canvas id="matrix"></canvas>
   <div id="console"></div>
+  <div id="asciiBox"></div> <!-- ✅ ASCII art container -->
 
   <script>
     const consoleDiv = document.getElementById("console");
+    const asciiBox = document.getElementById("asciiBox");
 
     function addLine(text, classes = []) {
       const line = document.createElement("div");
@@ -144,7 +169,7 @@
         if (n > 0) {
           addLine(`Server shutdown in: ${n}...`, "grad");
           if (Math.random() < 0.3) {
-            const err = errorCodes[Math.floor(Math.random() * errorCodes.length)];
+            const err = errorCodes[Math.floor(Math.random()*errorCodes.length)];
             addLine(err, "error");
           }
           n--;
@@ -170,18 +195,41 @@
           addLine(seq[j++], "grad");
           setTimeout(next, 1000);
         } else {
-          addLine(">>> ACCESS GRANTED — REDIRECTING <<<", "access");
+          addLine("[✓] Root Access Granted", "access");
+          addLine("[✓] Admin Override Active", "access");
+
+          // ✅ Show ASCII art
+          showAscii();
+
           setTimeout(() => {
-            window.location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
+            addLine(">>> ACCESS GRANTED — REDIRECTING <<<", "access");
+            setTimeout(() => {
+              window.location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
+            }, 2000);
           }, 2000);
         }
       }
       next();
     }
 
+    function showAscii() {
+      const asciiArt = `
+██    ██ ██       ██   ██ 
+██    ██ ██       ██   ██ 
+██ ██ ██ ██       ██   ██ 
+██ ██ ██ ██       ██   ██ 
+ ████  ███████     ████   
+      `;
+      asciiBox.textContent = asciiArt;
+      asciiBox.style.display = "block";
+      setTimeout(() => {
+        asciiBox.style.display = "none";
+      }, 2000);
+    }
+
     typeIntro();
 
-    /* MATRIX BACKGROUND (purple fade to black) */
+    /* MATRIX BACKGROUND */
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas() {
@@ -190,7 +238,7 @@
     }
     sizeCanvas();
 
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@ÆØ¥ΞЖ☠☢☣☯∆¤§¶¿※Ω¤µπ√";
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@ÆØ¥ΞЖ☠☢☣☯∆¤§¶¿※Ωµπ√";
     const fontSize = 16;
     let columns = Math.floor(canvas.width / fontSize);
     let drops = Array(columns).fill(1);
@@ -223,6 +271,3 @@
   </script>
 </body>
 </html>
-
-
-
