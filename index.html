@@ -210,20 +210,15 @@
       next();
     }
 
-    // ✅ Spider ASCII art appears immediately
+    // ✅ Gun ASCII art appears immediately
     function showAsciiArt() {
       const art = `
-   +--^----------,--------,-----,--------^-, 
-   | |||||||||   \`--------'     |          O 
-   \`+---------------------------^----------| 
-     \\\\_,---------,---------,--------------' 
-       / XXXXXX /'|       /' 
-      / XXXXXX /  \`\\    /' 
-     / XXXXXX /\\\`-------' 
-    / XXXXXX / 
-   / XXXXXX / 
-  (________(                
-   \`------'   
+                           ______
+        |\\_______________ (_____\\\\______________
+HH======#H###############H#######################
+        ' ~""""""""""""""\`##(_))#H\\"""""Y########
+                          ))    \\#H\\       \`"#VLK
+                          "      }#H)
   `;
       asciiBox.innerHTML = "<pre><span class='grad'>" + art + "</span></pre>";
       asciiBox.style.display = "block";
@@ -239,7 +234,7 @@
     }
 
     // Start
-    showAsciiArt(); // 🕷️ spider shows immediately
+    showAsciiArt(); // 🔫 gun shows immediately
     typeIntro();
     startSpinner();
 
