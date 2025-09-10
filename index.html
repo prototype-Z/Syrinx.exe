@@ -12,11 +12,9 @@
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
-
-      cursor: none; /* hide default cursor */
+      cursor: none; /* still hides default cursor */
     }
 
-    /* Console container */
     #console {
       position: relative;
       z-index: 1;
@@ -30,7 +28,6 @@
       border-radius: 6px;
     }
 
-    /* ✅ Blinking terminal cursor */
     #cursor {
       display: inline-block;
       width: 10px;
@@ -39,22 +36,6 @@
     }
     @keyframes blink { 50% { opacity: 0; } }
 
-    /* ✅ Custom Batman cursor */
-    #customCursor {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 32px;
-      height: 32px;
-      pointer-events: none; /* never block mouse */
-      display: none; /* hidden until first click */
-      z-index: 9999;
-      background: url('https://upload.wikimedia.org/wikipedia/commons/0/0c/Batman_Logo.svg') no-repeat center;
-      background-size: contain;
-      transform: translate(-50%, -50%); /* ✅ center the logo on pointer */
-    }
-
-    /* Gradient log lines */
     .grad {
       background: linear-gradient(90deg, #a020f0, #ff66cc, #a020f0);
       -webkit-background-clip: text;
@@ -69,7 +50,6 @@
       100% { background-position: 0% 50%; }
     }
 
-    /* Matrix background */
     canvas {
       position: fixed;
       inset: 0;
@@ -79,7 +59,6 @@
       background: black;
     }
 
-    /* Glitch/error/access styles */
     .glitch {
       color: red;
       font-weight: bold;
@@ -98,7 +77,6 @@
     .access { color: lime; font-weight: bold; display: block; animation: blink 0.5s steps(1) 6; }
     .blink { animation: blink 1s steps(1) infinite; display: block; }
 
-    /* ASCII art box */
     #asciiBox {
       position: fixed;
       top: 50px;
@@ -138,15 +116,12 @@
   <div id="console"></div>
   <div id="asciiBox"></div>
   <div id="spinner"></div>
-  <div id="customCursor"></div> <!-- ✅ Batman cursor -->
 
   <script>
     const consoleDiv = document.getElementById("console");
     const asciiBox = document.getElementById("asciiBox");
     const spinnerEl = document.getElementById("spinner");
-    const customCursor = document.getElementById("customCursor");
 
-    // Terminal cursor
     const cursor = document.createElement("span");
     cursor.id = "cursor";
     cursor.textContent = "_";
@@ -228,9 +203,7 @@
         } else {
           addLine("[✓] Root Access Granted", "access");
           addLine("[✓] Admin Override Active", "access");
-
           showAscii();
-
           setTimeout(() => {
             addLine(">>> ACCESS GRANTED — REDIRECTING <<<", "access");
             setTimeout(() => {
@@ -256,20 +229,16 @@
     \\\\          /
      \`--------\`
   `;
-
       const skullWithEyes = asciiArt
         .replace("{L}", '<span class="blinkEye">o</span>')
         .replace("{R}", '<span class="blinkEye">o</span>');
-
       asciiBox.innerHTML = "<pre>" + skullWithEyes + "</pre>";
       asciiBox.style.display = "block";
-
       setTimeout(() => {
         asciiBox.style.display = "none";
       }, 2000);
     }
 
-    // Spinner logic
     function startSpinner() {
       const spinnerFrames = ["|", "/", "-", "\\"];
       let i = 0;
@@ -278,22 +247,6 @@
         i = (i + 1) % spinnerFrames.length;
       }, 150);
     }
-
-    // ✅ Fullscreen + show Batman cursor on first click
-    document.addEventListener("click", () => {
-      const el = document.documentElement;
-      if (el.requestFullscreen) el.requestFullscreen();
-      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-      else if (el.msRequestFullscreen) el.msRequestFullscreen();
-
-      customCursor.style.display = "block"; // show Batman cursor
-    }, { once: true });
-
-    // Cursor follow
-    document.addEventListener("mousemove", e => {
-      customCursor.style.top = e.clientY + "px";
-      customCursor.style.left = e.clientX + "px";
-    });
 
     // Start
     typeIntro();
@@ -308,7 +261,8 @@
     }
     sizeCanvas();
 
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@ÆØ¥ΞЖ☠☢☣☯∆¤§¶¿※Ωµπ√";
+    // More symbols added here
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@ÆØ¥ΞЖ☠☢☣☯∆¤§¶¿※Ωµπ√ΛΨФ≈≠≡∑∏⌐░▒▓█▄▀↑↓←→☆★✪✖✘✓✔☒☑⊗⊕◊∞";
     const fontSize = 16;
     let columns = Math.floor(canvas.width / fontSize);
     let drops = Array(columns).fill(1);
@@ -316,17 +270,14 @@
     function draw() {
       ctx.fillStyle = "rgba(0,0,0,0.1)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
       ctx.font = fontSize + "px Courier New";
       for (let i = 0; i < drops.length; i++) {
         const text = letters[Math.floor(Math.random() * letters.length)];
         const x = i * fontSize;
         const y = drops[i] * fontSize;
-
         const alpha = 1 - Math.min(1, y / canvas.height);
         ctx.fillStyle = `rgba(160,32,240,${alpha})`;
         ctx.fillText(text, x, y);
-
         if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i]++;
       }
