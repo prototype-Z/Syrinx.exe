@@ -22,18 +22,20 @@
       white-space: pre-wrap;
       font-size: 16px;
       line-height: 1.4;
-      text-align: left;        /* ✅ align all text left */
-      max-width: 60ch;         /* ✅ keep text in a narrow column */
+      text-align: left;
+      max-width: 60ch;
+      background: rgba(0, 0, 0, 0.6); /* ✅ faint black box */
+      border-radius: 6px;
     }
 
-    /* Gradient text only for .grad lines */
+    /* Gradient log lines (block so they stack) */
     .grad {
       background: linear-gradient(90deg, #a020f0, #ff66cc, #a020f0);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-size: 300% 300%;
       animation: gradientShift 4s ease infinite;
-      display: inline-block;
+      display: block;
     }
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
@@ -51,12 +53,13 @@
       background: black;
     }
 
-    /* Special solid colors */
+    /* Special solid color styles */
     .glitch {
       color: red;
       -webkit-text-fill-color: red;
       background: none;
       font-weight: bold;
+      display: block;
       animation: glitch 1s infinite;
     }
     @keyframes glitch {
@@ -72,6 +75,7 @@
       -webkit-text-fill-color: #ff3b3b;
       background: none;
       font-weight: bold;
+      display: block;
     }
 
     .access {
@@ -79,10 +83,14 @@
       -webkit-text-fill-color: lime;
       background: none;
       font-weight: bold;
+      display: block;
       animation: blink 0.5s steps(1) 6;
     }
 
-    .blink { animation: blink 1s steps(1) infinite; }
+    .blink {
+      animation: blink 1s steps(1) infinite;
+      display: block;
+    }
     @keyframes blink { 50% { opacity: 0; } }
   </style>
 </head>
@@ -173,7 +181,7 @@
 
     typeIntro();
 
-    // Matrix background
+    /* MATRIX BACKGROUND (purple fade to black) */
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas() {
