@@ -117,6 +117,17 @@
       50% { text-shadow: -2px 1px #4b0082, 3px -2px #2e003e; }
       100% { text-shadow: 2px 2px #4b0082, 4px 4px #2e003e; }
     }
+
+    /* ✅ Glowing eye effect */
+    .eye {
+      color: #ff33ff;
+      text-shadow: 0 0 5px #ff66ff, 0 0 10px #ff00ff, 0 0 15px #ff33ff;
+      animation: eyeGlow 1s infinite alternate;
+    }
+    @keyframes eyeGlow {
+      from { text-shadow: 0 0 3px #a020f0, 0 0 6px #ff33ff; }
+      to { text-shadow: 0 0 10px #ff66ff, 0 0 20px #ff00ff; }
+    }
   </style>
 </head>
 <body>
@@ -169,7 +180,7 @@
       let n = seconds;
       const t = setInterval(() => {
         if (n > 0) {
-          addLine(`Server shutdown in: ${n}...`, "grad");
+          addLine(\`Server shutdown in: \${n}...\`, "grad");
           if (Math.random() < 0.3) {
             const err = errorCodes[Math.floor(Math.random()*errorCodes.length)];
             addLine(err, "error");
@@ -215,12 +226,13 @@
     }
 
     function showAscii() {
+      // skull split into normal + glowing eyes
       const asciiArt = `
        ______
     .-'      \`-.
    /            \\
   |,  .-.  .-.  ,|
-  | )(_o/  \\o_)( |
+  | )( <span class="eye">o</span>/  \ <span class="eye">o</span> )( |
   |/     /\\     \\|
   (_     ^^     _)
    \\__|IIIIII|__/
@@ -228,7 +240,7 @@
     \\          /
      \`--------\`
       `;
-      asciiBox.textContent = asciiArt;
+      asciiBox.innerHTML = "<pre>" + asciiArt + "</pre>";
       asciiBox.style.display = "block";
       setTimeout(() => {
         asciiBox.style.display = "none";
@@ -262,7 +274,7 @@
         const y = drops[i] * fontSize;
 
         const alpha = 1 - Math.min(1, y / canvas.height);
-        ctx.fillStyle = `rgba(160,32,240,${alpha})`;
+        ctx.fillStyle = \`rgba(160,32,240,\${alpha})\`;
         ctx.fillText(text, x, y);
 
         if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
