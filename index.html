@@ -118,15 +118,13 @@
       100% { text-shadow: 2px 2px #4b0082, 4px 4px #2e003e; }
     }
 
-    /* ✅ Glowing eye effect */
-    .eye {
-      color: #ff33ff;
-      text-shadow: 0 0 5px #ff66ff, 0 0 10px #ff00ff, 0 0 15px #ff33ff;
-      animation: eyeGlow 1s infinite alternate;
+    /* ✅ Blinking eyes */
+    .blinkEye {
+      animation: blinkEye 2s infinite;
     }
-    @keyframes eyeGlow {
-      from { text-shadow: 0 0 3px #a020f0, 0 0 6px #ff33ff; }
-      to { text-shadow: 0 0 10px #ff66ff, 0 0 20px #ff00ff; }
+    @keyframes blinkEye {
+      0%, 90%, 100% { visibility: visible; }
+      95% { visibility: hidden; } /* quick blink */
     }
   </style>
 </head>
@@ -241,10 +239,10 @@
      \`--------\`
   `;
 
-      // Replace placeholders with glowing eyes
+      // Replace placeholders with blinking eyes
       const skullWithEyes = asciiArt
-        .replace("{L}", '<span class="eye">o</span>')
-        .replace("{R}", '<span class="eye">o</span>');
+        .replace("{L}", '<span class="blinkEye">o</span>')
+        .replace("{R}", '<span class="blinkEye">o</span>');
 
       asciiBox.innerHTML = "<pre>" + skullWithEyes + "</pre>";
       asciiBox.style.display = "block";
