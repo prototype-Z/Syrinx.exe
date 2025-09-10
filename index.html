@@ -126,6 +126,14 @@
       0%, 90%, 100% { visibility: visible; }
       95% { visibility: hidden; } /* quick blink */
     }
+
+    /* ✅ Spinner */
+    #spinner {
+      display: inline-block;
+      margin-top: 5px;
+      color: #ff66cc;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -136,6 +144,7 @@
   <script>
     const consoleDiv = document.getElementById("console");
     const asciiBox = document.getElementById("asciiBox");
+    let spinnerInterval;
 
     function addLine(text, classes = []) {
       const line = document.createElement("div");
@@ -212,19 +221,22 @@
           // ✅ Show ASCII art
           showAscii();
 
+          // ✅ Start spinner
+          startSpinner();
+
           setTimeout(() => {
+            stopSpinner();
             addLine(">>> ACCESS GRANTED — REDIRECTING <<<", "access");
             setTimeout(() => {
               window.location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
             }, 2000);
-          }, 2000);
+          }, 4000);
         }
       }
       next();
     }
 
     function showAscii() {
-      // ASCII with placeholders for eyes
       const asciiArt = `
        ______
     .-'      \`-.
@@ -239,7 +251,6 @@
      \`--------\`
   `;
 
-      // Replace placeholders with blinking eyes
       const skullWithEyes = asciiArt
         .replace("{L}", '<span class="blinkEye">o</span>')
         .replace("{R}", '<span class="blinkEye">o</span>');
@@ -250,6 +261,26 @@
       setTimeout(() => {
         asciiBox.style.display = "none";
       }, 2000);
+    }
+
+    /* ✅ Spinner logic */
+    function startSpinner() {
+      const spinnerFrames = ["|", "/", "-", "\\"];
+      let i = 0;
+      const spinnerEl = document.createElement("div");
+      spinnerEl.id = "spinner";
+      consoleDiv.appendChild(spinnerEl);
+
+      spinnerInterval = setInterval(() => {
+        spinnerEl.textContent = "Loading " + spinnerFrames[i];
+        i = (i + 1) % spinnerFrames.length;
+      }, 150);
+    }
+
+    function stopSpinner() {
+      clearInterval(spinnerInterval);
+      const spinnerEl = document.getElementById("spinner");
+      if (spinnerEl) spinnerEl.remove();
     }
 
     typeIntro();
