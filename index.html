@@ -41,6 +41,7 @@
       -webkit-text-fill-color: transparent;
       background-size: 400% 400%;
       animation: gradientShift 3s ease infinite;
+      display: inline-block;
     }
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
@@ -63,6 +64,13 @@
       display: block;
       animation: glitch 1s infinite;
     }
+    @keyframes glitch {
+      0% { text-shadow: 2px 0 red, -2px 0 cyan; }
+      25% { text-shadow: -2px 0 lime, 2px 0 red; }
+      50% { text-shadow: 2px 0 blue, -2px 0 red; }
+      75% { text-shadow: -2px 0 yellow, 2px 0 blue; }
+      100% { text-shadow: 2px 0 red, -2px 0 cyan; }
+    }
 
     .error { color: #ff3b3b; font-weight: bold; display: block; }
     .access { color: lime; font-weight: bold; display: block; animation: blink 0.5s steps(1) 6; }
@@ -78,7 +86,7 @@
       font-family: monospace;
       font-size: 16px;
       padding: 10px;
-      display: block;
+      display: block; /* show immediately */
       z-index: 2;
       white-space: pre;
       text-align: center;
@@ -87,9 +95,6 @@
 
     #asciiBox pre {
       margin: 0;
-      font-family: monospace;
-      white-space: pre;
-      line-height: 1.2;
     }
 
     #spinner {
@@ -164,7 +169,7 @@
       let n = seconds;
       const t = setInterval(() => {
         if (n > 0) {
-          addLine(\`Server shutdown in: \${n}...\`, "grad");
+          addLine(`Server shutdown in: ${n}...`, "grad");
           if (Math.random() < 0.3) {
             const err = errorCodes[Math.floor(Math.random()*errorCodes.length)];
             addLine(err, "error");
@@ -205,7 +210,7 @@
       next();
     }
 
-    // ✅ Gun ASCII art inside outlined box
+    // ✅ Gun ASCII art appears immediately
     function showAsciiArt() {
       const art = `
                            ______
@@ -214,8 +219,8 @@ HH======#H###############H#######################
         ' ~""""""""""""""\`##(_))#H\\"""""Y########
                           ))    \\#H\\       \`"Y###
                           "      }#H)
-      `;
-      asciiBox.innerHTML = "<pre class='grad'>" + art + "</pre>";
+  `;
+      asciiBox.innerHTML = "<pre><span class='grad'>" + art + "</span></pre>";
       asciiBox.style.display = "block";
     }
 
@@ -229,7 +234,7 @@ HH======#H###############H#######################
     }
 
     // Start
-    showAsciiArt();
+    showAsciiArt(); // 🔫 gun shows immediately
     typeIntro();
     startSpinner();
 
@@ -256,7 +261,7 @@ HH======#H###############H#######################
         const x = i * fontSize;
         const y = drops[i] * fontSize;
         const alpha = 1 - Math.min(1, y / canvas.height);
-        ctx.fillStyle = \`rgba(160,32,240,\${alpha})\`;
+        ctx.fillStyle = `rgba(160,32,240,${alpha})`;
         ctx.fillText(text, x, y);
         if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i]++;
