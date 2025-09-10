@@ -13,8 +13,7 @@
       align-items: flex-start;
       justify-content: flex-start;
 
-      /* ✅ Hide default cursor */
-      cursor: none;
+      cursor: none; /* hide normal cursor */
     }
 
     /* Console container */
@@ -38,28 +37,20 @@
       color: #ff66cc;
       animation: blink 1s steps(1) infinite;
     }
-    @keyframes blink {
-      50% { opacity: 0; }
-    }
+    @keyframes blink { 50% { opacity: 0; } }
 
-    /* ✅ Custom gradient mouse cursor */
+    /* ✅ Custom Batman cursor */
     #customCursor {
       position: fixed;
       top: 0;
       left: 0;
-      width: 20px;
-      height: 20px;
+      width: 32px;
+      height: 32px;
       pointer-events: none;
-      border-radius: 50%;
-      background: linear-gradient(45deg, black, purple, black);
-      background-size: 200% 200%;
-      animation: cursorAnim 3s linear infinite;
+      display: none; /* hidden until first click */
       z-index: 9999;
-    }
-    @keyframes cursorAnim {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      background: url('https://upload.wikimedia.org/wikipedia/commons/0/0c/Batman_Logo.svg') no-repeat center;
+      background-size: contain;
     }
 
     /* Gradient log lines */
@@ -87,7 +78,7 @@
       background: black;
     }
 
-    /* Glitch styles */
+    /* Glitch/error/access styles */
     .glitch {
       color: red;
       font-weight: bold;
@@ -106,7 +97,7 @@
     .access { color: lime; font-weight: bold; display: block; animation: blink 0.5s steps(1) 6; }
     .blink { animation: blink 1s steps(1) infinite; display: block; }
 
-    /* Purple ASCII art box */
+    /* ASCII art box */
     #asciiBox {
       position: fixed;
       top: 50px;
@@ -123,12 +114,6 @@
       white-space: pre;
       text-align: center;
       text-shadow: 2px 2px #4b0082, 4px 4px #2e003e;
-      animation: asciiGlitch 0.2s infinite;
-    }
-    @keyframes asciiGlitch {
-      0% { text-shadow: 2px 2px #4b0082, 4px 4px #2e003e; }
-      50% { text-shadow: -2px 1px #4b0082, 3px -2px #2e003e; }
-      100% { text-shadow: 2px 2px #4b0082, 4px 4px #2e003e; }
     }
 
     .blinkEye { animation: blinkEye 2s infinite; }
@@ -152,7 +137,7 @@
   <div id="console"></div>
   <div id="asciiBox"></div>
   <div id="spinner"></div>
-  <div id="customCursor"></div> <!-- ✅ gradient custom cursor -->
+  <div id="customCursor"></div> <!-- ✅ Batman cursor -->
 
   <script>
     const consoleDiv = document.getElementById("console");
@@ -293,19 +278,21 @@
       }, 150);
     }
 
-    // Custom cursor follow
-    document.addEventListener("mousemove", e => {
-      customCursor.style.top = e.clientY + "px";
-      customCursor.style.left = e.clientX + "px";
-    });
-
-    // Fullscreen on click
+    // ✅ Fullscreen + show Batman cursor on first click
     document.addEventListener("click", () => {
       const el = document.documentElement;
       if (el.requestFullscreen) el.requestFullscreen();
       else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
       else if (el.msRequestFullscreen) el.msRequestFullscreen();
+
+      customCursor.style.display = "block"; // show Batman cursor
     }, { once: true });
+
+    // Cursor follow
+    document.addEventListener("mousemove", e => {
+      customCursor.style.top = e.clientY + "px";
+      customCursor.style.left = e.clientX + "px";
+    });
 
     // Start
     typeIntro();
