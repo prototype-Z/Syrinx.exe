@@ -82,12 +82,10 @@
       let counter = seconds;
       const countdownInterval = setInterval(() => {
         if (counter > 0) {
-          // ✅ Clean countdown text (no glitch)
           consoleDiv.innerHTML += "Server shutdown in: " + counter + "...\n";
           counter--;
         } else {
           clearInterval(countdownInterval);
-          // ✅ Only this line glitches
           consoleDiv.innerHTML += "\n<span class='glitch'>>> DATABASE CORRUPTED — FILES WIPED <<<</span>\n";
           consoleDiv.innerHTML += "\n<span class='blink'>[ PRESS ANY KEY TO CONTINUE ]</span>";
 
@@ -124,30 +122,26 @@
 
     function showProgressBar() {
       let progress = 0;
-      consoleDiv.innerHTML += "[░░░░░░░░░░░░░░░░░░░░] 0%\n";
+
+      // Add dedicated span for progress bar
+      const progressSpan = document.createElement("span");
+      progressSpan.id = "progressBar";
+      progressSpan.textContent = "[░░░░░░░░░░░░░░░░░░░░] 0%";
+      consoleDiv.appendChild(progressSpan);
+      consoleDiv.appendChild(document.createElement("br"));
 
       const progressInterval = setInterval(() => {
         progress++;
         let barLength = Math.floor(progress / 5); // 20 steps total
         let bar = "[" + "█".repeat(barLength) + "░".repeat(20 - barLength) + "] " + progress + "%";
 
-        // overwrite the last progress line
-        consoleDiv.innerHTML = consoleDiv.innerHTML.replace(/\[.*%\]/, bar);
+        // Update the span text directly
+        progressSpan.textContent = bar;
 
         if (progress >= 100) {
           clearInterval(progressInterval);
 
-          // ✅ Show ACCESS GRANTED before redirect
+          // Show ACCESS GRANTED before redirect
           consoleDiv.innerHTML += "\n\n<span class='access'>>> ACCESS GRANTED — REDIRECTING <<<</span>\n";
 
           setTimeout(() => {
-            window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-          }, 2000); // 2 sec delay
-        }
-      }, 50); // smooth animation (~5s fill)
-    }
-
-    typeLine();
-  </script>
-</body>
-</html>
