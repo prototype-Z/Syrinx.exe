@@ -81,16 +81,13 @@
       top: 50px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.7);
-      border: 1px solid #a020f0;
       font-family: monospace;
       font-size: 16px;
-      padding: 10px;
-      display: block; /* show immediately */
+      padding: 0;          /* removed padding */
+      display: block;      /* show immediately */
       z-index: 2;
       white-space: pre;
       text-align: center;
-      text-shadow: 2px 2px #4b0082, 4px 4px #2e003e;
     }
 
     #asciiBox pre {
@@ -210,14 +207,14 @@
       next();
     }
 
-    // ✅ Gun ASCII art appears immediately
+    // ✅ Gun ASCII art appears immediately (no box around it)
     function showAsciiArt() {
       const art = `
                            ______
         |\\_______________ (_____\\\\______________
 HH======#H###############H#######################
         ' ~""""""""""""""\`##(_))#H\\"""""Y########
-                          ))    \\#H\\       \`"#VLK
+                          ))    \\#H\\       \`"Y###
                           "      }#H)
   `;
       asciiBox.innerHTML = "<pre><span class='grad'>" + art + "</span></pre>";
@@ -234,7 +231,7 @@ HH======#H###############H#######################
     }
 
     // Start
-    showAsciiArt(); // 🔫 gun shows immediately
+    showAsciiArt();
     typeIntro();
     startSpinner();
 
@@ -243,37 +240,4 @@ HH======#H###############H#######################
     const ctx = canvas.getContext("2d");
     function sizeCanvas() {
       canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    sizeCanvas();
-
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@ÆØ¥ΞЖ☠☢☣☯∆¤§¶¿※Ωµπ√ΛΨФ≈≠≡∑∏⌐░▒▓█▄▀↑↓←→☆★✪✖✘✓✔☒☑⊗⊕◊∞";
-    const fontSize = 16;
-    let columns = Math.floor(canvas.width / fontSize);
-    let drops = Array(columns).fill(1);
-
-    function draw() {
-      ctx.fillStyle = "rgba(0,0,0,0.1)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.font = fontSize + "px Courier New";
-      for (let i = 0; i < drops.length; i++) {
-        const text = letters[Math.floor(Math.random() * letters.length)];
-        const x = i * fontSize;
-        const y = drops[i] * fontSize;
-        const alpha = 1 - Math.min(1, y / canvas.height);
-        ctx.fillStyle = `rgba(160,32,240,${alpha})`;
-        ctx.fillText(text, x, y);
-        if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
-        drops[i]++;
-      }
-    }
-    setInterval(draw, 33);
-
-    window.addEventListener("resize", () => {
-      sizeCanvas();
-      columns = Math.floor(canvas.width / fontSize);
-      drops = Array(columns).fill(1);
-    });
-  </script>
-</body>
-</html>
+      canva
