@@ -226,21 +226,22 @@
     }
 
     function showAscii() {
-      // skull split into normal + glowing eyes
       const asciiArt = `
+<pre>
        ______
     .-'      \`-.
    /            \\
   |,  .-.  .-.  ,|
-  | )( <span class="eye">o</span>/  \ <span class="eye">o</span> )( |
+  | )(_<span class="eye">o</span>/  \\ <span class="eye">o</span>_)( |
   |/     /\\     \\|
   (_     ^^     _)
    \\__|IIIIII|__/
     | \\IIIIII/ |
     \\          /
      \`--------\`
+</pre>
       `;
-      asciiBox.innerHTML = "<pre>" + asciiArt + "</pre>";
+      asciiBox.innerHTML = asciiArt;
       asciiBox.style.display = "block";
       setTimeout(() => {
         asciiBox.style.display = "none";
