@@ -82,10 +82,12 @@
       let counter = seconds;
       const countdownInterval = setInterval(() => {
         if (counter > 0) {
-          consoleDiv.innerHTML += "Server shutdown in: " + counter + "...\n"; // clean text
+          // ✅ Clean countdown text (no glitch)
+          consoleDiv.innerHTML += "Server shutdown in: " + counter + "...\n";
           counter--;
         } else {
           clearInterval(countdownInterval);
+          // ✅ Only this line glitches
           consoleDiv.innerHTML += "\n<span class='glitch'>>> DATABASE CORRUPTED — FILES WIPED <<<</span>\n";
           consoleDiv.innerHTML += "\n<span class='blink'>[ PRESS ANY KEY TO CONTINUE ]</span>";
 
@@ -135,14 +137,14 @@
         if (progress >= 100) {
           clearInterval(progressInterval);
 
-          // Show fake "ACCESS GRANTED" before redirect
+          // ✅ Show ACCESS GRANTED before redirect
           consoleDiv.innerHTML += "\n\n<span class='access'>>> ACCESS GRANTED — REDIRECTING <<<</span>\n";
 
           setTimeout(() => {
             window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-          }, 2000); // 2 sec delay for dramatic effect
+          }, 2000); // 2 sec delay
         }
-      }, 50); // smooth animation (fills in ~5s)
+      }, 50); // smooth animation (~5s fill)
     }
 
     typeLine();
