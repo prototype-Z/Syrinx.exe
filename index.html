@@ -41,9 +41,9 @@
       -webkit-text-fill-color: transparent;
       background-size: 400% 400%;
       animation: gradientShift 3s ease infinite;
-      display: inline-block;  /* each line styled separately */
+      display: block;       /* each line stacked */
+      white-space: pre;     /* preserve ASCII spacing */
       font-family: monospace;
-      white-space: pre;
     }
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
@@ -87,7 +87,6 @@
       font-size: 16px;
       display: block;
       z-index: 2;
-      white-space: pre;
       text-align: center;
     }
 
@@ -208,7 +207,7 @@
       next();
     }
 
-    // ✅ Gun ASCII art (each line gradient separately)
+    // ✅ Gun ASCII art with gradient per line
     function showAsciiArt() {
       const art = `
                            ______
@@ -219,11 +218,10 @@ HH======#H###############H#######################
                           "      }#H)
   `;
 
-      // Wrap each line in gradient span
       const gradientArt = art
         .split("\n")
         .map(line => `<span class="grad">${line}</span>`)
-        .join("<br>");
+        .join("");
 
       asciiBox.innerHTML = "<pre>" + gradientArt + "</pre>";
       asciiBox.style.display = "block";
