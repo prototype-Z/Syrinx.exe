@@ -226,21 +226,29 @@
     }
 
     function showAscii() {
+      // ASCII with placeholders for eyes
       const asciiArt = `
        ______
     .-'      \`-.
    /            \\
   |,  .-.  .-.  ,|
-  | )(_<span class="eye">o</span>/  \\\\ <span class="eye">o</span>_)( |
+  | )(_{L}/  \\\\ {R}_)( |
   |/     /\\\\     \\\\|
   (_     ^^     _)
    \\\\__|IIIIII|__/
     | \\\\IIIIII/ |
     \\\\          /
      \`--------\`
-      `;
-      asciiBox.innerHTML = "<pre>" + asciiArt + "</pre>";
+  `;
+
+      // Replace placeholders with glowing eyes
+      const skullWithEyes = asciiArt
+        .replace("{L}", '<span class="eye">o</span>')
+        .replace("{R}", '<span class="eye">o</span>');
+
+      asciiBox.innerHTML = "<pre>" + skullWithEyes + "</pre>";
       asciiBox.style.display = "block";
+
       setTimeout(() => {
         asciiBox.style.display = "none";
       }, 2000);
