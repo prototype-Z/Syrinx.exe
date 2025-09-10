@@ -13,7 +13,7 @@
       align-items: flex-start;
       justify-content: flex-start;
 
-      cursor: none; /* hide normal cursor */
+      cursor: none; /* hide default cursor */
     }
 
     /* Console container */
@@ -40,19 +40,19 @@
     @keyframes blink { 50% { opacity: 0; } }
 
     /* ✅ Custom Batman cursor */
-#customCursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 32px;
-  height: 32px;
-  pointer-events: none; /* never block the mouse */
-  display: none; /* hidden until first click */
-  z-index: 9999;
-  background: url('https://upload.wikimedia.org/wikipedia/commons/0/0c/Batman_Logo.svg') no-repeat center;
-  background-size: contain;
-  transform: translate(-50%, -50%); /* ✅ keeps logo centered around mouse */
-}
+    #customCursor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 32px;
+      height: 32px;
+      pointer-events: none; /* never block mouse */
+      display: none; /* hidden until first click */
+      z-index: 9999;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/0/0c/Batman_Logo.svg') no-repeat center;
+      background-size: contain;
+      transform: translate(-50%, -50%); /* ✅ center the logo on pointer */
+    }
 
     /* Gradient log lines */
     .grad {
@@ -290,10 +290,10 @@
     }, { once: true });
 
     // Cursor follow
- document.addEventListener("mousemove", e => {
-  customCursor.style.top = e.clientY + "px";
-  customCursor.style.left = e.clientX + "px";
-});
+    document.addEventListener("mousemove", e => {
+      customCursor.style.top = e.clientY + "px";
+      customCursor.style.left = e.clientX + "px";
+    });
 
     // Start
     typeIntro();
@@ -341,4 +341,3 @@
   </script>
 </body>
 </html>
-
