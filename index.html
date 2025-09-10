@@ -214,7 +214,7 @@
       next();
     }
 
-    // ✅ Laughing Skull Animation
+    // ✅ Laughing Skull + "HA HA HA"
     function showAscii() {
       const skullClosed = `
    ______
@@ -255,6 +255,7 @@
 
       const laughInterval = setInterval(() => {
         asciiBox.innerHTML = "<pre>" + (open ? withEyes(skullClosed) : withEyes(skullOpen)) + "</pre>";
+        addLine("HA HA HA", "glitch"); // spam creepy laugh in console
         open = !open;
       }, 300);
 
