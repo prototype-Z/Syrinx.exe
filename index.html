@@ -103,52 +103,24 @@
         "Decrypting core files...",
         "Overriding system locks...",
         "Finalizing termination...",
-        "Cleaning up traces...",
-        "Progress: "
+        "Cleaning up traces..."
       ];
       let j = 0;
 
       function typeFake() {
-        if (j < fakeLines.length - 1) {
+        if (j < fakeLines.length) {
           consoleDiv.innerHTML += fakeLines[j] + "\n";
           j++;
           setTimeout(typeFake, 1000);
         } else {
-          showProgressBar();
-        }
-      }
-      typeFake();
-    }
-
-    function showProgressBar() {
-      let progress = 0;
-
-      // Add dedicated span for progress bar
-      const progressSpan = document.createElement("span");
-      progressSpan.id = "progressBar";
-      progressSpan.textContent = "[░░░░░░░░░░░░░░░░░░░░] 0%";
-      consoleDiv.appendChild(progressSpan);
-      consoleDiv.appendChild(document.createElement("br"));
-
-      const progressInterval = setInterval(() => {
-        progress++;
-        let barLength = Math.floor(progress / 5); // 20 steps total
-        let bar = "[" + "█".repeat(barLength) + "░".repeat(20 - barLength) + "] " + progress + "%";
-
-        // Update the span text directly
-        progressSpan.textContent = bar;
-
-        if (progress >= 100) {
-          clearInterval(progressInterval);
-
-          // Show ACCESS GRANTED before redirect
+          // Directly show ACCESS GRANTED then redirect
           consoleDiv.innerHTML += "\n\n<span class='access'>>> ACCESS GRANTED — REDIRECTING <<<</span>\n";
-
           setTimeout(() => {
             window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
           }, 2000);
         }
-      }, 50); // smooth animation (~5s fill)
+      }
+      typeFake();
     }
 
     typeLine();
