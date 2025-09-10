@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Roblox - Hacked</title>
   <style>
     body {
@@ -10,6 +10,8 @@
       font-family: "Courier New", monospace;
       overflow: hidden;
     }
+
+    /* Console sits above matrix */
     #console {
       position: relative;
       z-index: 1;
@@ -17,32 +19,44 @@
       white-space: pre-wrap;
       font-size: 16px;
       line-height: 1.4;
+      color: #cccccc; /* base color for non-gradient lines */
+    }
+
+    /* Apply the purple→pink gradient ONLY to lines with .grad */
+    .grad {
       background: linear-gradient(90deg, #a020f0, #ff66cc, #a020f0);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      color: transparent; /* for non-webkit */
       background-size: 300% 300%;
       animation: gradientShift 4s ease infinite;
+      display: inline-block;
     }
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
+
+    /* Matrix background */
     canvas {
       position: fixed;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
       z-index: 0;
       background: black;
     }
+
+    /* Special line styles (solid colors, no gradient) */
     .glitch {
       color: red;
-      -webkit-text-fill-color: initial;
+      -webkit-text-fill-color: red;
       background: none;
       font-weight: bold;
+      text-shadow: 2px 0 red, -2px 0 cyan;
       animation: glitch 1s infinite;
+      display: inline-block;
     }
     @keyframes glitch {
       0% { text-shadow: 2px 0 red, -2px 0 cyan; }
@@ -51,21 +65,26 @@
       75% { text-shadow: -2px 0 yellow, 2px 0 blue; }
       100% { text-shadow: 2px 0 red, -2px 0 cyan; }
     }
-    .blink { animation: blink 1s steps(1) infinite; }
-    @keyframes blink { 50% { opacity: 0; } }
-    .access {
-      color: lime;
-      -webkit-text-fill-color: initial;
+
+    .error {
+      color: #ff3b3b;
+      -webkit-text-fill-color: #ff3b3b;
       background: none;
       font-weight: bold;
+      display: inline-block;
+    }
+
+    .access {
+      color: lime;
+      -webkit-text-fill-color: lime;
+      background: none;
+      font-weight: bold;
+      display: inline-block;
       animation: blink 0.5s steps(1) 6;
     }
-    .error {
-      color: red !important;              /* solid red */
-      -webkit-text-fill-color: red !important;
-      background: none !important;
-      font-weight: bold;
-    }
+
+    .blink { animation: blink 1s steps(1) infinite; display: inline-block; }
+    @keyframes blink { 50% { opacity: 0; } }
   </style>
 </head>
 <body>
@@ -75,14 +94,17 @@
   <script>
     const consoleDiv = document.getElementById("console");
 
-    function addLine(text, className="") {
-      const span = document.createElement("div");
-      if (className) span.className = className;
-      span.textContent = text;
-      consoleDiv.appendChild(span);
+    // helper to add a line with one or more class names
+    function addLine(text, classes = []) {
+      const line = document.createElement("div");
+      if (typeof classes === "string") classes = classes ? [classes] : [];
+      line.className = classes.join(" ");
+      line.textContent = text;
+      consoleDiv.appendChild(line);
     }
 
-    const lines = [
+    // intro logs (use gradient)
+    const introLines = [
       "Connecting to Roblox servers...",
       "Bypassing security...",
       "Extracting user data...",
@@ -93,17 +115,17 @@
       "⚠ WARNING: Roblox shutting down in..."
     ];
 
-    let i = 0;
-    function typeLine() {
-      if (i < lines.length) {
-        addLine(lines[i]);
-        i++;
-        setTimeout(typeLine, 1000);
+    let idx = 0;
+    function typeIntro() {
+      if (idx < introLines.length) {
+        addLine(introLines[idx++], "grad");
+        setTimeout(typeIntro, 1000);
       } else {
         startCountdown(10);
       }
     }
 
+    // error codes (solid red)
     const errorCodes = [
       "[ERROR 0x1A2B] Memory Corruption",
       "[ERROR 0x3F5C] Access Violation",
@@ -112,29 +134,29 @@
       "[ERROR 0x404] Resource Not Found"
     ];
 
+    // clean, non-glitchy countdown (gradient)
     function startCountdown(seconds) {
-      let counter = seconds;
-      const interval = setInterval(() => {
-        if (counter > 0) {
-          addLine("Server shutdown in: " + counter + "...");
+      let n = seconds;
+      const t = setInterval(() => {
+        if (n > 0) {
+          addLine(`Server shutdown in: ${n}...`, "grad");
           if (Math.random() < 0.3) {
-            let err = errorCodes[Math.floor(Math.random()*errorCodes.length)];
-            addLine(err, "error"); // ✅ error codes in red
+            const err = errorCodes[Math.floor(Math.random() * errorCodes.length)];
+            addLine(err, "error"); // solid red
           }
-          counter--;
+          n--;
         } else {
-          clearInterval(interval);
-          addLine(">>> DATABASE CORRUPTED — FILES WIPED <<<", "glitch");
-          addLine("[ PRESS ANY KEY TO CONTINUE ]", "blink");
-          document.addEventListener("keydown", () => {
-            fakeLoading();
-          }, { once: true });
+          clearInterval(t);
+          addLine(">>> DATABASE CORRUPTED — FILES WIPED <<<", "glitch"); // red glitch
+          addLine("[ PRESS ANY KEY TO CONTINUE ]", ["grad", "blink"]); // gradient blinking
+          document.addEventListener("keydown", () => fakeLoading(), { once: true });
         }
       }, 1000);
     }
 
+    // final sequence (gradient) then access granted (green) & redirect
     function fakeLoading() {
-      const fakeLines = [
+      const seq = [
         "Decrypting core files...",
         "Overriding system locks...",
         "Finalizing termination...",
@@ -142,9 +164,8 @@
       ];
       let j = 0;
       function next() {
-        if (j < fakeLines.length) {
-          addLine(fakeLines[j]);
-          j++;
+        if (j < seq.length) {
+          addLine(seq[j++], "grad");
           setTimeout(next, 1000);
         } else {
           addLine(">>> ACCESS GRANTED — REDIRECTING <<<", "access");
@@ -156,18 +177,21 @@
       next();
     }
 
-    typeLine();
+    typeIntro();
 
-    // MATRIX BACKGROUND EFFECT
+    /* MATRIX BACKGROUND (purple, fade to black at bottom) */
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    function sizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    sizeCanvas();
 
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@";
     const fontSize = 16;
-    const columns = Math.floor(canvas.width / fontSize);
-    const drops = Array(columns).fill(1);
+    let columns = Math.floor(canvas.width / fontSize);
+    let drops = Array(columns).fill(1);
 
     function draw() {
       ctx.fillStyle = "rgba(0,0,0,0.1)";
@@ -179,23 +203,21 @@
         const x = i * fontSize;
         const y = drops[i] * fontSize;
 
-        const fade = Math.min(1, y / canvas.height);
-        const alpha = 1 - fade;
-        ctx.fillStyle = `rgba(160,32,240,${alpha})`;
+        // alpha fades as it approaches bottom
+        const alpha = 1 - Math.min(1, y / canvas.height);
+        ctx.fillStyle = `rgba(160,32,240,${alpha})`; // purple → black fade
         ctx.fillText(text, x, y);
 
-        if (y > canvas.height && Math.random() > 0.975) {
-          drops[i] = 0;
-        }
+        if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i]++;
       }
     }
-
-    setInterval(draw, 33);
+    const interval = setInterval(draw, 33);
 
     window.addEventListener("resize", () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      sizeCanvas();
+      columns = Math.floor(canvas.width / fontSize);
+      drops = Array(columns).fill(1);
     });
   </script>
 </body>
