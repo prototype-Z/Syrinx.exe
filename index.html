@@ -12,7 +12,6 @@
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
-      /* cursor: none;  <-- removed so default cursor shows */
     }
 
     #console {
@@ -215,26 +214,52 @@
       next();
     }
 
+    // ✅ Laughing Skull Animation
     function showAscii() {
-      const asciiArt = `
-       ______
-    .-'      \`-.
-   /            \\
-  |,  .-.  .-.  ,|
-  | )(_{L}/  \\\\ {R}_)( |
-  |/     /\\\\     \\\\|
-  (_     ^^     _)
-   \\\\__|IIIIII|__/
-    | \\\\IIIIII/ |
-    \\\\          /
-     \`--------\`
-  `;
-      const skullWithEyes = asciiArt
-        .replace("{L}", '<span class="blinkEye">o</span>')
-        .replace("{R}", '<span class="blinkEye">o</span>');
-      asciiBox.innerHTML = "<pre>" + skullWithEyes + "</pre>";
+      const skullClosed = `
+   ______
+.-'      \`-.
+ /            \\
+|,  .-.  .-.  ,|
+| )(_{L}/  \\\\ {R}_)( |
+|/     /\\\\     \\\\|
+(_     ^^     _)
+ \\\\__|IIIIII|__/
+  | \\\\IIIIII/ |
+   \\\\  ----  /
+    \`--------\`
+`;
+
+      const skullOpen = `
+   ______
+.-'      \`-.
+ /            \\
+|,  .-.  .-.  ,|
+| )(_{L}/  \\\\ {R}_)( |
+|/     /\\\\     \\\\|
+(_     ^^     _)
+ \\\\__|IIIIII|__/
+  | \\\\IIIIII/ |
+   \\\\        /
+    \`--====--\`
+`;
+
+      function withEyes(ascii) {
+        return ascii
+          .replace("{L}", '<span class="blinkEye">o</span>')
+          .replace("{R}", '<span class="blinkEye">o</span>');
+      }
+
+      let open = false;
       asciiBox.style.display = "block";
+
+      const laughInterval = setInterval(() => {
+        asciiBox.innerHTML = "<pre>" + (open ? withEyes(skullClosed) : withEyes(skullOpen)) + "</pre>";
+        open = !open;
+      }, 300);
+
       setTimeout(() => {
+        clearInterval(laughInterval);
         asciiBox.style.display = "none";
       }, 2000);
     }
@@ -261,7 +286,6 @@
     }
     sizeCanvas();
 
-    // More symbols added here
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@ÆØ¥ΞЖ☠☢☣☯∆¤§¶¿※Ωµπ√ΛΨФ≈≠≡∑∏⌐░▒▓█▄▀↑↓←→☆★✪✖✘✓✔☒☑⊗⊕◊∞";
     const fontSize = 16;
     let columns = Math.floor(canvas.width / fontSize);
