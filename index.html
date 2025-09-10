@@ -127,24 +127,27 @@
       95% { visibility: hidden; } /* quick blink */
     }
 
-    /* ✅ Spinner */
+    /* ✅ Spinner in top left */
     #spinner {
-      display: inline-block;
-      margin-top: 5px;
-      color: #ff66cc;
+      position: fixed;
+      top: 5px;
+      left: 10px;
       font-weight: bold;
+      color: #ff66cc;
+      z-index: 5;
     }
   </style>
 </head>
 <body>
   <canvas id="matrix"></canvas>
   <div id="console"></div>
-  <div id="asciiBox"></div> <!-- ✅ ASCII art container -->
+  <div id="asciiBox"></div>
+  <div id="spinner"></div> <!-- ✅ spinner always visible -->
 
   <script>
     const consoleDiv = document.getElementById("console");
     const asciiBox = document.getElementById("asciiBox");
-    let spinnerInterval;
+    const spinnerEl = document.getElementById("spinner");
 
     function addLine(text, classes = []) {
       const line = document.createElement("div");
@@ -218,19 +221,14 @@
           addLine("[✓] Root Access Granted", "access");
           addLine("[✓] Admin Override Active", "access");
 
-          // ✅ Show ASCII art
           showAscii();
 
-          // ✅ Start spinner
-          startSpinner();
-
           setTimeout(() => {
-            stopSpinner();
             addLine(">>> ACCESS GRANTED — REDIRECTING <<<", "access");
             setTimeout(() => {
               window.location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
             }, 2000);
-          }, 4000);
+          }, 2000);
         }
       }
       next();
@@ -267,23 +265,15 @@
     function startSpinner() {
       const spinnerFrames = ["|", "/", "-", "\\"];
       let i = 0;
-      const spinnerEl = document.createElement("div");
-      spinnerEl.id = "spinner";
-      consoleDiv.appendChild(spinnerEl);
-
-      spinnerInterval = setInterval(() => {
+      setInterval(() => {
         spinnerEl.textContent = "Loading " + spinnerFrames[i];
         i = (i + 1) % spinnerFrames.length;
       }, 150);
     }
 
-    function stopSpinner() {
-      clearInterval(spinnerInterval);
-      const spinnerEl = document.getElementById("spinner");
-      if (spinnerEl) spinnerEl.remove();
-    }
-
+    // start everything
     typeIntro();
+    startSpinner();
 
     /* MATRIX BACKGROUND */
     const canvas = document.getElementById("matrix");
