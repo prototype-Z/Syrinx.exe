@@ -41,8 +41,6 @@
       -webkit-text-fill-color: transparent;
       background-size: 400% 400%;
       animation: gradientShift 3s ease infinite;
-      font-family: monospace;
-      white-space: pre; /* keep ASCII spacing */
     }
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
@@ -75,10 +73,23 @@
       top: 50px;
       left: 50%;
       transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      border: 1px solid #a020f0;
+      font-family: monospace;
       font-size: 16px;
+      padding: 10px;
       display: block;
       z-index: 2;
+      white-space: pre;
       text-align: center;
+      text-shadow: 2px 2px #4b0082, 4px 4px #2e003e;
+    }
+
+    #asciiBox pre {
+      margin: 0;
+      font-family: monospace;
+      white-space: pre;
+      line-height: 1.2;
     }
 
     #spinner {
@@ -194,7 +205,7 @@
       next();
     }
 
-    // ✅ Gun ASCII art
+    // ✅ Gun ASCII art inside outlined box
     function showAsciiArt() {
       const art = `
                            ______
@@ -204,13 +215,7 @@ HH======#H###############H#######################
                           ))    \\#H\\       \`"Y###
                           "      }#H)
       `;
-
-      const gradientArt = art
-        .split("\n")
-        .map(line => line ? `<div class="grad">${line}</div>` : "<br>")
-        .join("");
-
-      asciiBox.innerHTML = gradientArt;
+      asciiBox.innerHTML = "<pre class='grad'>" + art + "</pre>";
       asciiBox.style.display = "block";
     }
 
