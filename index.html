@@ -180,7 +180,7 @@
       let n = seconds;
       const t = setInterval(() => {
         if (n > 0) {
-          addLine(\`Server shutdown in: \${n}...\`, "grad");
+          addLine(`Server shutdown in: ${n}...`, "grad");
           if (Math.random() < 0.3) {
             const err = errorCodes[Math.floor(Math.random()*errorCodes.length)];
             addLine(err, "error");
@@ -227,21 +227,19 @@
 
     function showAscii() {
       const asciiArt = `
-<pre>
        ______
     .-'      \`-.
    /            \\
   |,  .-.  .-.  ,|
-  | )(_<span class="eye">o</span>/  \\ <span class="eye">o</span>_)( |
-  |/     /\\     \\|
+  | )(_<span class="eye">o</span>/  \\\\ <span class="eye">o</span>_)( |
+  |/     /\\\\     \\\\|
   (_     ^^     _)
-   \\__|IIIIII|__/
-    | \\IIIIII/ |
-    \\          /
+   \\\\__|IIIIII|__/
+    | \\\\IIIIII/ |
+    \\\\          /
      \`--------\`
-</pre>
       `;
-      asciiBox.innerHTML = asciiArt;
+      asciiBox.innerHTML = "<pre>" + asciiArt + "</pre>";
       asciiBox.style.display = "block";
       setTimeout(() => {
         asciiBox.style.display = "none";
@@ -275,7 +273,7 @@
         const y = drops[i] * fontSize;
 
         const alpha = 1 - Math.min(1, y / canvas.height);
-        ctx.fillStyle = \`rgba(160,32,240,\${alpha})\`;
+        ctx.fillStyle = `rgba(160,32,240,${alpha})`;
         ctx.fillText(text, x, y);
 
         if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
