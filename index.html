@@ -5,16 +5,18 @@
   <title>Roblox - Hacked</title>
   <style>
     body {
+      margin: 0;
       background: black;
       font-family: "Courier New", monospace;
-      padding: 20px;
       overflow: hidden;
     }
     #console {
+      position: relative;
+      z-index: 2;
+      padding: 20px;
       white-space: pre-wrap;
       font-size: 16px;
       line-height: 1.4;
-      /* Purple → Pink animated gradient text */
       background: linear-gradient(90deg, #a020f0, #ff66cc, #a020f0);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -26,8 +28,19 @@
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background: black;
+    }
     .glitch {
       color: red;
+      -webkit-text-fill-color: initial;
+      background: none;
       font-weight: bold;
       animation: glitch 1s infinite;
     }
@@ -41,21 +54,32 @@
     .blink {
       animation: blink 1s steps(1) infinite;
     }
-    @keyframes blink {
-      50% { opacity: 0; }
-    }
+    @keyframes blink { 50% { opacity: 0; } }
     .access {
       color: lime;
+      -webkit-text-fill-color: initial;
+      background: none;
       font-weight: bold;
-      animation: blink 0.5s steps(1) 6; /* quick blinking effect */
+      animation: blink 0.5s steps(1) 6;
     }
   </style>
 </head>
 <body>
+  <canvas id="matrix"></canvas>
   <div id="console"></div>
+
   <script>
     const consoleDiv = document.getElementById("console");
 
+    // Add console line helper
+    function addLine(text, className="") {
+      const span = document.createElement("div");
+      if (className) span.className = className;
+      span.textContent = text;
+      consoleDiv.appendChild(span);
+    }
+
+    // Main intro lines
     const lines = [
       "Connecting to Roblox servers...",
       "Bypassing security...",
@@ -64,13 +88,13 @@
       "Injecting exploit payload...",
       ">>> SYSTEM OVERRIDDEN <<<",
       "",
-      "⚠ WARNING: Roblox shutting down in...",
+      "⚠ WARNING: Roblox shutting down in..."
     ];
 
     let i = 0;
     function typeLine() {
       if (i < lines.length) {
-        consoleDiv.innerHTML += lines[i] + "\n";
+        addLine(lines[i]);
         i++;
         setTimeout(typeLine, 1000);
       } else {
@@ -78,17 +102,30 @@
       }
     }
 
+    // Random error messages
+    const errorCodes = [
+      "[ERROR 0x1A2B] Memory Corruption",
+      "[ERROR 0x3F5C] Access Violation",
+      "[ERROR 0xDEAD] Kernel Panic",
+      "[ERROR 0xBEEF] Data Segment Fault",
+      "[ERROR 0x404] Resource Not Found"
+    ];
+
     function startCountdown(seconds) {
       let counter = seconds;
-      const countdownInterval = setInterval(() => {
+      const interval = setInterval(() => {
         if (counter > 0) {
-          consoleDiv.innerHTML += "Server shutdown in: " + counter + "...\n";
+          addLine("Server shutdown in: " + counter + "...");
+          // Sprinkle random error occasionally
+          if (Math.random() < 0.3) {
+            let err = errorCodes[Math.floor(Math.random()*errorCodes.length)];
+            addLine(err);
+          }
           counter--;
         } else {
-          clearInterval(countdownInterval);
-          consoleDiv.innerHTML += "\n<span class='glitch'>>> DATABASE CORRUPTED — FILES WIPED <<<</span>\n";
-          consoleDiv.innerHTML += "\n<span class='blink'>[ PRESS ANY KEY TO CONTINUE ]</span>";
-
+          clearInterval(interval);
+          addLine(">>> DATABASE CORRUPTED — FILES WIPED <<<", "glitch");
+          addLine("[ PRESS ANY KEY TO CONTINUE ]", "blink");
           document.addEventListener("keydown", () => {
             fakeLoading();
           }, { once: true });
@@ -97,33 +134,71 @@
     }
 
     function fakeLoading() {
-      consoleDiv.innerHTML += "\n\nStarting final sequence...\n";
-
-      let fakeLines = [
+      const fakeLines = [
         "Decrypting core files...",
         "Overriding system locks...",
         "Finalizing termination...",
         "Cleaning up traces..."
       ];
       let j = 0;
-
-      function typeFake() {
+      function next() {
         if (j < fakeLines.length) {
-          consoleDiv.innerHTML += fakeLines[j] + "\n";
+          addLine(fakeLines[j]);
           j++;
-          setTimeout(typeFake, 1000);
+          setTimeout(next, 1000);
         } else {
-          // Directly show ACCESS GRANTED then redirect
-          consoleDiv.innerHTML += "\n\n<span class='access'>>> ACCESS GRANTED — REDIRECTING <<<</span>\n";
+          addLine(">>> ACCESS GRANTED — REDIRECTING <<<", "access");
           setTimeout(() => {
             window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
           }, 2000);
         }
       }
-      typeFake();
+      next();
     }
 
     typeLine();
+
+    // MATRIX BACKGROUND EFFECT (Purple → fade to black)
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@";
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops = Array(Math.floor(columns)).fill(1);
+
+    function draw() {
+      ctx.fillStyle = "rgba(0,0,0,0.1)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.font = fontSize + "px Courier New";
+      for (let i = 0; i < drops.length; i++) {
+        const text = letters[Math.floor(Math.random() * letters.length)];
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+
+        // Purple color at top, fade to black near bottom
+        const fade = Math.min(1, y / canvas.height);
+        const alpha = 1 - fade;
+        ctx.fillStyle = `rgba(160,32,240,${alpha})`; // purple fading to black
+        ctx.fillText(text, x, y);
+
+        if (y > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    }
+
+    setInterval(draw, 33);
+
+    // Handle resize
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
   </script>
 </body>
 </html>
