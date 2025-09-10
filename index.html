@@ -36,12 +36,12 @@
     @keyframes blink { 50% { opacity: 0; } }
 
     .grad {
-      background: linear-gradient(90deg, #a020f0, #ff66cc, #a020f0);
+      background: linear-gradient(90deg, #a020f0, #ff66cc, #000000, #a020f0, #ff66cc);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-size: 300% 300%;
-      animation: gradientShift 4s ease infinite;
-      display: block;
+      background-size: 400% 400%;
+      animation: gradientShift 3s ease infinite;
+      display: inline-block;
     }
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
@@ -83,21 +83,18 @@
       transform: translateX(-50%);
       background: rgba(0,0,0,0.7);
       border: 1px solid #a020f0;
-      color: #a020f0;
       font-family: monospace;
       font-size: 16px;
       padding: 10px;
-      display: none;
+      display: block; /* show immediately */
       z-index: 2;
       white-space: pre;
       text-align: center;
       text-shadow: 2px 2px #4b0082, 4px 4px #2e003e;
     }
 
-    .blinkEye { animation: blinkEye 2s infinite; }
-    @keyframes blinkEye {
-      0%, 90%, 100% { visibility: visible; }
-      95% { visibility: hidden; }
+    #asciiBox pre {
+      margin: 0;
     }
 
     #spinner {
@@ -202,7 +199,6 @@
         } else {
           addLine("[✓] Root Access Granted", "access");
           addLine("[✓] Admin Override Active", "access");
-          showAscii();
           setTimeout(() => {
             addLine(">>> ACCESS GRANTED — REDIRECTING <<<", "access");
             setTimeout(() => {
@@ -214,55 +210,23 @@
       next();
     }
 
-    // ✅ Laughing Skull + "HA HA HA"
-    function showAscii() {
-      const skullClosed = `
+    // ✅ Skull appears immediately with gradient
+    function showSkull() {
+      const skull = `
    ______
 .-'      \`-.
  /            \\
 |,  .-.  .-.  ,|
-| )(_{L}/  \\\\ {R}_)( |
+| )(_ o/  \\\\ o_)( |
 |/     /\\\\     \\\\|
 (_     ^^     _)
  \\\\__|IIIIII|__/
   | \\\\IIIIII/ |
-   \\\\  ----  /
+   \\\\  ====  /
     \`--------\`
 `;
-
-      const skullOpen = `
-   ______
-.-'      \`-.
- /            \\
-|,  .-.  .-.  ,|
-| )(_{L}/  \\\\ {R}_)( |
-|/     /\\\\     \\\\|
-(_     ^^     _)
- \\\\__|IIIIII|__/
-  | \\\\IIIIII/ |
-   \\\\        /
-    \`--====--\`
-`;
-
-      function withEyes(ascii) {
-        return ascii
-          .replace("{L}", '<span class="blinkEye">o</span>')
-          .replace("{R}", '<span class="blinkEye">o</span>');
-      }
-
-      let open = false;
+      asciiBox.innerHTML = "<pre><span class='grad'>" + skull + "</span></pre>";
       asciiBox.style.display = "block";
-
-      const laughInterval = setInterval(() => {
-        asciiBox.innerHTML = "<pre>" + (open ? withEyes(skullClosed) : withEyes(skullOpen)) + "</pre>";
-        addLine("HA HA HA", "glitch"); // spam creepy laugh in console
-        open = !open;
-      }, 300);
-
-      setTimeout(() => {
-        clearInterval(laughInterval);
-        asciiBox.style.display = "none";
-      }, 2000);
     }
 
     function startSpinner() {
@@ -275,6 +239,7 @@
     }
 
     // Start
+    showSkull(); // 🔥 show skull immediately
     typeIntro();
     startSpinner();
 
