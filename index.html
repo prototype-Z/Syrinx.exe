@@ -142,19 +142,19 @@
     /* 🔥 Pentagram flashes */
     .pentagram {
       position: fixed;
-      color: red;
       font-size: 24px; /* small but visible */
       font-family: monospace;
       z-index: 3;
       opacity: 0.9;
       animation: fadeOut 1.5s ease forwards;
       pointer-events: none;
+      text-shadow: 0 0 5px #ff66cc, 0 0 10px #a020f0;
     }
 
     @keyframes fadeOut {
       0% { opacity: 1; transform: scale(1) rotate(0deg); }
-      50% { opacity: 0.7; transform: scale(1.2) rotate(15deg); }
-      100% { opacity: 0; transform: scale(0.8) rotate(-15deg); }
+      50% { opacity: 0.8; transform: scale(1.3) rotate(20deg); }
+      100% { opacity: 0; transform: scale(0.7) rotate(-20deg); }
     }
   </style>
 </head>
@@ -337,6 +337,9 @@ HH======#H###############H#######################
       pent.className = "pentagram";
       pent.textContent = "⛧";
 
+      // random color (pink or purple)
+      pent.style.color = Math.random() < 0.5 ? "#ff66cc" : "#a020f0";
+
       pent.style.top = Math.random() * window.innerHeight + "px";
       pent.style.left = Math.random() * window.innerWidth + "px";
 
@@ -374,7 +377,7 @@ HH======#H###############H#######################
     "✞✠✡✢✣✤✥✦✧✩✪✫✬✭✮✯" +
     "卐卍巫鬼魔死血骷魑魍魎" +
     "⛧⛤⛥⛦⛨†‡☨☩⸸" +
-    "♇♆♅♄♃♁☿☽☾";
+    "♇♆♅♄♃♁☿☽☾♈♉♊♋♌♍♎♏♐♑♒♓";
 
     const fontSize = 16;
     let columns = Math.floor(canvas.width / fontSize);
