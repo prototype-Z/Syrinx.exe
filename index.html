@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>System - Hacked</title>
   <style>
     body {
       margin: 0;
       background: black;
       font-family: "Courier New", monospace;
-      overflow: hidden;
+      overflow-x: hidden; /* prevent sideways scroll */
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
@@ -18,15 +19,17 @@
       position: relative;
       z-index: 1;
       padding: 20px;
-      white-space: pre;        /* keep spacing like terminal */
-      font-size: 16px;
+      white-space: pre;        /* terminal style */
+      font-size: 14px;
       line-height: 1.4;
-      text-align: left;        /* always left aligned */
-      max-width: 80ch;         /* fixed width like real terminal */
+      text-align: left;
+      max-width: 95vw;
       background: rgba(0, 0, 0, 0.8);
       border-radius: 6px;
       color: #00ff00;          /* green terminal default */
       font-family: monospace;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
 
     #cursor {
@@ -86,17 +89,20 @@
       background: rgba(0,0,0,0.7);
       border: 1px solid #a020f0;
       font-family: monospace;
-      font-size: 16px;
+      font-size: 14px;
       padding: 10px;
       display: block;
       z-index: 2;
       white-space: pre;
       text-align: center;
       text-shadow: 2px 2px #4b0082, 4px 4px #2e003e;
+      max-width: 95vw;    /* responsive */
+      overflow-x: auto;   /* allow sideways scroll if ASCII is wider */
     }
 
     #asciiBox pre {
       margin: 0;
+      font-size: inherit;
     }
 
     #spinner {
@@ -106,6 +112,18 @@
       font-weight: bold;
       color: #ff66cc;
       z-index: 5;
+    }
+
+    /* 📱 Mobile adjustments */
+    @media (max-width: 600px) {
+      #console {
+        font-size: 12px;
+        padding: 10px;
+      }
+      #asciiBox {
+        font-size: 10px;
+        padding: 5px;
+      }
     }
   </style>
 </head>
