@@ -12,9 +12,10 @@
       overflow-x: hidden;
     }
 
-    #console, #errorConsole {
+    #console {
       position: fixed;
       top: 10px;
+      left: 10px;
       width: 45vw;
       height: 90vh;
       padding: 20px;
@@ -28,16 +29,27 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
       overflow-y: auto;
-    }
-
-    #console {
-      left: 10px;
-      color: #00ff00; /* green system logs */
+      color: #00ff00;
     }
 
     #errorConsole {
+      position: fixed;
+      top: 10px;
       right: 10px;
-      color: #ff3b3b; /* red errors */
+      width: 45vw;
+      height: 90vh;
+      padding: 20px;
+      white-space: pre;
+      font-size: 14px;
+      line-height: 1.4;
+      text-align: left;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 6px;
+      font-family: monospace;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      overflow-y: auto;
+      color: #ff3b3b;
     }
 
     /* 📱 On mobile, stack consoles */
@@ -87,13 +99,6 @@
       font-weight: bold;
       display: block;
       animation: glitch 1s infinite;
-    }
-    @keyframes glitch {
-      0% { text-shadow: 2px 0 red, -2px 0 cyan; }
-      25% { text-shadow: -2px 0 lime, 2px 0 red; }
-      50% { text-shadow: 2px 0 blue, -2px 0 red; }
-      75% { text-shadow: -2px 0 yellow, 2px 0 blue; }
-      100% { text-shadow: 2px 0 red, -2px 0 cyan; }
     }
 
     .error { color: #ff3b3b; font-weight: bold; display: block; }
@@ -209,13 +214,29 @@
       }
     }
 
+    // --- Unique error messages ---
     const errorCodes = [
       "[ERROR 0x1A2B] Memory Corruption",
       "[ERROR 0x3F5C] Access Violation",
       "[ERROR 0xDEAD] Kernel Panic",
       "[ERROR 0xBEEF] Data Segment Fault",
-      "[ERROR 0x404] Resource Not Found"
+      "[ERROR 0x404] Resource Not Found",
+      "[ERROR 0xBAD] Registry Hive Corrupted",
+      "[ERROR 0xF1RE] Critical Disk Failure",
+      "[ERROR 0xN0PE] Unauthorized Remote Access",
+      "[ERROR 0xC0DE] BIOS Integrity Compromised",
+      "[ERROR 0x1337] Encryption Keys Extracted"
     ];
+
+    let usedErrors = new Set();
+
+    function getUniqueError() {
+      const available = errorCodes.filter(err => !usedErrors.has(err));
+      if (available.length === 0) return null;
+      const err = available[Math.floor(Math.random() * available.length)];
+      usedErrors.add(err);
+      return err;
+    }
 
     function startCountdown(seconds) {
       let n = seconds;
@@ -223,13 +244,14 @@
         if (n > 0) {
           addLine(`System breach in: ${n}...`, "grad");
 
-          if (Math.random() < 0.3) {
-            const err = errorCodes[Math.floor(Math.random()*errorCodes.length)];
-            addLine(err, "error");
+          // Show a unique error sometimes
+          if (Math.random() < 0.4) {
+            const err = getUniqueError();
+            if (err) addLine(err, "error");
           }
 
+          // Fake webcam check (logs left)
           if (Math.random() < 0.2) {
-            addLine("[WEBCAM] Device detected: Integrated Camera", "error");
             addLine("[WEBCAM] Status: Recording...", "grad");
           }
 
