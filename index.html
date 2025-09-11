@@ -18,13 +18,15 @@
       position: relative;
       z-index: 1;
       padding: 20px;
-      white-space: pre-wrap;
+      white-space: pre;        /* keep spacing like terminal */
       font-size: 16px;
       line-height: 1.4;
-      text-align: left;
-      max-width: 60ch;
-      background: rgba(0, 0, 0, 0.6);
+      text-align: left;        /* always left aligned */
+      max-width: 80ch;         /* fixed width like real terminal */
+      background: rgba(0, 0, 0, 0.8);
       border-radius: 6px;
+      color: #00ff00;          /* green terminal default */
+      font-family: monospace;
     }
 
     #cursor {
@@ -41,7 +43,7 @@
       -webkit-text-fill-color: transparent;
       background-size: 400% 400%;
       animation: gradientShift 3s ease infinite;
-      display: inline-block;
+      font-family: monospace;
     }
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
@@ -127,16 +129,27 @@
       consoleDiv.appendChild(cursor);
     }
 
+    // --- Typewriter effect for console lines ---
     function addLine(text, classes = []) {
       const line = document.createElement("div");
       if (typeof classes === "string") classes = classes ? [classes] : [];
       line.className = classes.join(" ");
-      line.textContent = text;
       consoleDiv.insertBefore(line, cursor);
-      updateCursor();
+
+      let i = 0;
+      function typeChar() {
+        if (i < text.length) {
+          line.textContent += text.charAt(i);
+          i++;
+          setTimeout(typeChar, 20); // typing speed
+        } else {
+          updateCursor();
+        }
+      }
+      typeChar();
     }
 
-    // --- Updated intro lines ---
+    // --- Intro sequence ---
     const introLines = [
       "Establishing secure connection...",
       "Bypassing system firewall...",
@@ -172,13 +185,11 @@
         if (n > 0) {
           addLine(`System breach in: ${n}...`, "grad");
 
-          // Random fake errors
           if (Math.random() < 0.3) {
             const err = errorCodes[Math.floor(Math.random()*errorCodes.length)];
             addLine(err, "error");
           }
 
-          // Fake webcam check
           if (Math.random() < 0.2) {
             addLine("[WEBCAM] Device detected: Integrated Camera", "error");
             addLine("[WEBCAM] Status: Recording...", "grad");
@@ -194,7 +205,6 @@
       }, 1000);
     }
 
-    // --- Updated loading sequence ---
     function fakeLoading() {
       const seq = [
         "Decrypting core files...",
@@ -245,7 +255,7 @@ HH======#H###############H#######################
       }, 150);
     }
 
-    // --- Start everything ---
+    // --- Start ---
     showAsciiArt();
     typeIntro();
     startSpinner();
