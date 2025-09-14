@@ -178,6 +178,22 @@
       consoleDiv.appendChild(cursor);
     }
 
+    // --- Vibration helpers ---
+    let vibrationInterval;
+    function startVibration() {
+      if (navigator.vibrate) {
+        vibrationInterval = setInterval(() => {
+          navigator.vibrate([300, 200]);
+        }, 500);
+      }
+    }
+    function stopVibration() {
+      if (navigator.vibrate) {
+        navigator.vibrate(0);
+        clearInterval(vibrationInterval);
+      }
+    }
+
     function addLine(text, classes = []) {
       if (typeof classes === "string") classes = classes ? [classes] : [];
       const isError = classes.includes("error");
@@ -243,6 +259,7 @@
     }
 
     function startCountdown(seconds) {
+      startVibration(); // 🔥 Start buzzing when countdown starts
       let n = seconds;
       const t = setInterval(() => {
         if (n > 0) {
@@ -257,6 +274,7 @@
           n--;
         } else {
           clearInterval(t);
+          stopVibration(); // ✅ stop before redirect
           addLine(">>> PERSONAL DATA COMPROMISED <<<", "glitch");
           addLine("[ PRESS ANY KEY TO CONTINUE ]", ["grad", "blink"]);
           document.addEventListener("keydown", () => fakeLoading(), { once: true });
@@ -265,6 +283,7 @@
     }
 
     function fakeLoading() {
+      stopVibration(); // make sure it stops
       const seq = [
         "Decrypting core files...",
         "Stealing browser autofill data...",
@@ -330,7 +349,6 @@ HH======#H###############H#######################
       if (Math.random() < 0.5) spawnPentagram();
     }, 2000);
 
-    // --- Mobile redirect on tap ---
     function isMobile() {
       return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
     }
