@@ -52,7 +52,6 @@
       color: #ff3b3b;
     }
 
-    /* 📱 On mobile, stack consoles */
     @media (max-width: 800px) {
       #console, #errorConsole {
         position: relative;
@@ -139,10 +138,9 @@
       z-index: 5;
     }
 
-    /* 🔥 Pentagram flashes */
     .pentagram {
       position: fixed;
-      font-size: 24px; /* small but visible */
+      font-size: 24px;
       font-family: monospace;
       z-index: 3;
       opacity: 0.9;
@@ -180,16 +178,12 @@
       consoleDiv.appendChild(cursor);
     }
 
-    // --- Typewriter effect for both consoles ---
     function addLine(text, classes = []) {
       if (typeof classes === "string") classes = classes ? [classes] : [];
-
       const isError = classes.includes("error");
       const target = isError ? errorDiv : consoleDiv;
-
       const line = document.createElement("div");
       line.className = classes.join(" ");
-
       let i = 0;
       function typeChar() {
         if (i < text.length) {
@@ -200,17 +194,11 @@
           if (!isError) updateCursor();
         }
       }
-
-      if (isError) {
-        target.appendChild(line);
-      } else {
-        target.insertBefore(line, cursor);
-      }
-
+      if (isError) target.appendChild(line);
+      else target.insertBefore(line, cursor);
       typeChar();
     }
 
-    // --- Intro sequence ---
     const introLines = [
       "Establishing secure connection...",
       "Bypassing system firewall...",
@@ -232,7 +220,6 @@
       }
     }
 
-    // --- Unique error messages ---
     const errorCodes = [
       "[ERROR 0x1A2B] Memory Corruption",
       "[ERROR 0x3F5C] Access Violation",
@@ -247,7 +234,6 @@
     ];
 
     let usedErrors = new Set();
-
     function getUniqueError() {
       const available = errorCodes.filter(err => !usedErrors.has(err));
       if (available.length === 0) return null;
@@ -261,16 +247,13 @@
       const t = setInterval(() => {
         if (n > 0) {
           addLine(`System breach in: ${n}...`, "grad");
-
           if (Math.random() < 0.4) {
             const err = getUniqueError();
             if (err) addLine(err, "error");
           }
-
           if (Math.random() < 0.2) {
             addLine("[WEBCAM] Status: Recording...", "grad");
           }
-
           n--;
         } else {
           clearInterval(t);
@@ -308,7 +291,6 @@
       next();
     }
 
-    // --- ASCII Gun Art ---
     function showAsciiArt() {
       const art = `
                            ______
@@ -331,21 +313,15 @@ HH======#H###############H#######################
       }, 150);
     }
 
-    // --- Pentagram spawner ---
     function spawnPentagram() {
       const pent = document.createElement("div");
       pent.className = "pentagram";
       pent.textContent = "⛧";
-
-      // random color (pink or purple)
       pent.style.color = Math.random() < 0.5 ? "#ff66cc" : "#a020f0";
-
       pent.style.top = Math.random() * window.innerHeight + "px";
       pent.style.left = Math.random() * window.innerWidth + "px";
-
       const size = 20 + Math.random() * 20;
       pent.style.fontSize = size + "px";
-
       document.body.appendChild(pent);
       setTimeout(() => pent.remove(), 1500);
     }
@@ -354,12 +330,23 @@ HH======#H###############H#######################
       if (Math.random() < 0.5) spawnPentagram();
     }, 2000);
 
-    // --- Start ---
+    // --- Mobile redirect on tap ---
+    function isMobile() {
+      return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    }
+    if (isMobile()) {
+      document.addEventListener("click", () => {
+        window.location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
+      }, { once: true });
+      document.addEventListener("touchstart", () => {
+        window.location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
+      }, { once: true });
+    }
+
     showAsciiArt();
     typeIntro();
     startSpinner();
 
-    // Matrix background with satanic symbols
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas() {
@@ -371,13 +358,13 @@ HH======#H###############H#######################
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" +
     "#$%&@!?*+=-_^~" +
     "ÆØ¥ΞЖШФΩµπ√∆∑∏∫∂∇" +
-    "◙○◉◍◎◈◇◆◊" +
+    "⌐░▒▓█▄▀▌▐◘◙○◉◍◎◈◇◆◊" +
     "↑↓←→↔↕↖↗↘↙" +
     "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯" +
     "✞✠✡✢✣✤✥✦✧✩✪✫✬✭✮✯" +
-    "巫鬼魔死血骷魑魍魎" +
+    "卐卍巫鬼魔死血骷魑魍魎" +
     "⛧⛤⛥⛦⛨†‡☨☩⸸" +
-    "♇♆♅♄♃♁☿☽☾";
+    "♇♆♅♄♃♁☿☽☾♈♉♊♋♌♍♎♏♐♑♒♓";
 
     const fontSize = 16;
     let columns = Math.floor(canvas.width / fontSize);
@@ -408,4 +395,3 @@ HH======#H###############H#######################
   </script>
 </body>
 </html>
-
