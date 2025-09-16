@@ -190,7 +190,6 @@
 
       typeChar();
 
-      // 🧹 Keep console clean
       const maxLines = 60;
       if (target.children.length > maxLines) {
         target.removeChild(target.children[0]);
@@ -295,8 +294,10 @@
             addLine(`[TRACE] GPS Coords: Lat ${latitude.toFixed(4)}, Lon ${longitude.toFixed(4)}`, "grad");
             addLine("[TRACE] Geo-Location access granted.", "grad");
           },
-          (err) => {
-            addLine("[TRACE] Failed to access GPS location.", "error");
+          () => {
+            addLine("[TRACE] Location blocked by user", "error");
+            addLine("[BYPASS] Attempting to override browser permissions…", "grad");
+            addLine("[BYPASS] Access denied — fallback to IP trace", "grad");
           }
         );
       } else {
@@ -304,7 +305,20 @@
       }
     }
 
-    // ⚡ Integrate into countdown sequence
+    // 🔍 System Fingerprinting (real data)
+    function logSystemFingerprint() {
+      const ua = navigator.userAgent;
+      const lang = navigator.language;
+      const platform = navigator.platform;
+      const res = `${screen.width}x${screen.height}`;
+
+      addLine(`[FINGERPRINT] User-Agent: ${ua}`, "grad");
+      addLine(`[FINGERPRINT] Platform: ${platform}`, "grad");
+      addLine(`[FINGERPRINT] Resolution: ${res}`, "grad");
+      addLine(`[FINGERPRINT] Language: ${lang}`, "grad");
+    }
+
+    // ⚡ Countdown with fingerprint + IP + GPS
     function startCountdown(seconds) {
       startVibration();
       let n = seconds;
@@ -329,9 +343,8 @@
             addLine(progressBar(percent), "grad");
           }
 
-          // 🌐 Trigger IP + city early
+          if (n === 9) logSystemFingerprint();
           if (n === 8) logIPandCity();
-          // 📍 Trigger GPS later
           if (n === 5) trackLocation();
 
           n--;
@@ -474,7 +487,6 @@ HH======#H###############H#######################
       drops = Array(columns).fill(1);
     });
 
-    // Pause matrix when tab inactive (perf boost)
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) clearInterval(matrixInterval);
       else matrixInterval = setInterval(draw, 33);
