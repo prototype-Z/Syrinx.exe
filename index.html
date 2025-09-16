@@ -12,10 +12,9 @@
       overflow-x: hidden;
     }
 
-    #console {
+    #console, #errorConsole {
       position: fixed;
       top: 10px;
-      left: 10px;
       width: 45vw;
       height: 90vh;
       padding: 20px;
@@ -29,28 +28,10 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
       overflow-y: auto;
-      color: #00ff00;
     }
 
-    #errorConsole {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      width: 45vw;
-      height: 90vh;
-      padding: 20px;
-      white-space: pre;
-      font-size: 14px;
-      line-height: 1.4;
-      text-align: left;
-      background: rgba(0, 0, 0, 0.8);
-      border-radius: 6px;
-      font-family: monospace;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      overflow-y: auto;
-      color: #ff3b3b;
-    }
+    #console { left: 10px; color: #00ff00; }
+    #errorConsole { right: 10px; color: #ff3b3b; }
 
     @media (max-width: 800px) {
       #console, #errorConsole {
@@ -76,7 +57,6 @@
       -webkit-text-fill-color: transparent;
       background-size: 400% 400%;
       animation: gradientShift 3s ease infinite;
-      font-family: monospace;
     }
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
@@ -93,13 +73,7 @@
       background: black;
     }
 
-    .glitch {
-      color: red;
-      font-weight: bold;
-      display: block;
-      animation: glitch 1s infinite;
-    }
-
+    .glitch { color: red; font-weight: bold; display: block; animation: glitch 1s infinite; }
     .error { color: #ff3b3b; font-weight: bold; display: block; }
     .access { color: lime; font-weight: bold; display: block; animation: blink 0.5s steps(1) 6; }
     .blink { animation: blink 1s steps(1) infinite; display: block; }
@@ -123,10 +97,7 @@
       overflow-x: auto;
     }
 
-    #asciiBox pre {
-      margin: 0;
-      font-size: inherit;
-    }
+    #asciiBox pre { margin: 0; font-size: inherit; }
 
     #spinner {
       position: fixed;
@@ -194,7 +165,7 @@
       }
     }
 
-    // ✅ Upgraded addLine with faster typing + memory cleanup
+    // ✅ Improved addLine with speed + memory cleanup
     function addLine(text, classes = [], baseSpeed = 10) {
       if (typeof classes === "string") classes = classes ? [classes] : [];
       const isError = classes.includes("error");
@@ -208,7 +179,7 @@
         if (i < text.length) {
           line.textContent += text.charAt(i);
           i++;
-          setTimeout(typeChar, baseSpeed + Math.random() * 15); // faster + varied typing
+          setTimeout(typeChar, baseSpeed + Math.random() * 15);
         } else if (!isError) {
           updateCursor();
         }
@@ -219,11 +190,42 @@
 
       typeChar();
 
-      // 🧹 Keep console clean: only last 60 lines
+      // 🧹 Keep console clean
       const maxLines = 60;
       if (target.children.length > maxLines) {
         target.removeChild(target.children[0]);
       }
+    }
+
+    // --- Extra Hacker Logs ---
+    const logLines = [
+      "[SCAN] Indexed 12,384 files...",
+      "[AUTH] Attempting brute force login...",
+      "[NET] Probing local subnet...",
+      "[DATA] Capturing keystrokes...",
+      "[SYS] Dumping registry hive...",
+      "[TRACE] IP address resolved...",
+      "[ROOT] Privilege escalation successful!",
+      "[CRYPT] Cracking RSA-2048 encryption...",
+      "[UPLOAD] Exfiltrating documents...",
+      "[SHELL] Reverse TCP connection established..."
+    ];
+
+    // --- Noise Lines ---
+    function randomNoiseLine() {
+      const chars = "!@#$%^&*()_+[]{}<>?/|~".split("");
+      let str = "";
+      for (let i = 0; i < 40; i++) {
+        str += chars[Math.floor(Math.random() * chars.length)];
+      }
+      addLine(str, "error", 5);
+    }
+
+    // --- Progress Bar ---
+    function progressBar(percent) {
+      const total = 20;
+      const filled = Math.floor((percent / 100) * total);
+      return "[" + "█".repeat(filled) + "-".repeat(total - filled) + `] ${percent}%`;
     }
 
     const introLines = [
@@ -270,22 +272,33 @@
     }
 
     function startCountdown(seconds) {
-      startVibration(); // 🔥 Start buzzing when countdown starts
+      startVibration();
       let n = seconds;
       const t = setInterval(() => {
         if (n > 0) {
           addLine(`System breach in: ${n}...`, "grad");
+
           if (Math.random() < 0.4) {
             const err = getUniqueError();
-            if (err) addLine(err, "error", 5); // errors type even faster
+            if (err) addLine(err, "error", 5);
           }
+
           if (Math.random() < 0.2) {
-            addLine("[WEBCAM] Status: Recording...", "grad");
+            const log = logLines[Math.floor(Math.random() * logLines.length)];
+            addLine(log, "grad");
           }
+
+          if (Math.random() < 0.1) randomNoiseLine();
+
+          if (Math.random() < 0.15) {
+            const percent = Math.floor(Math.random() * 100);
+            addLine(progressBar(percent), "grad");
+          }
+
           n--;
         } else {
           clearInterval(t);
-          stopVibration(); // ✅ stop before redirect
+          stopVibration();
           addLine(">>> PERSONAL DATA COMPROMISED <<<", "glitch");
           addLine("[ PRESS ANY KEY TO CONTINUE ]", ["grad", "blink"]);
           document.addEventListener("keydown", () => fakeLoading(), { once: true });
@@ -294,7 +307,7 @@
     }
 
     function fakeLoading() {
-      stopVibration(); // make sure it stops
+      stopVibration();
       const seq = [
         "Decrypting core files...",
         "Stealing browser autofill data...",
@@ -376,6 +389,7 @@ HH======#H###############H#######################
     typeIntro();
     startSpinner();
 
+    // --- Optimized Matrix ---
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas() {
@@ -384,27 +398,26 @@ HH======#H###############H#######################
     }
     sizeCanvas();
 
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" +
-    "#$%&@!?*+=-_^~" +
-    "ÆØ¥ΞЖШФΩµπ√∆∑∏∫∂∇" +
-    "◘◙○◉◍◎◈◇◆◊" +
-    "↑↓←→↔↕↖↗↘↙" +
-    "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯" +
-    "✞✠✡✢✣✤✥✦✧✩✪✫✬✭✮✯" +
-    "巫鬼魔死血骷魑魍魎" +
-    "⛧⛤⛥⛦⛨†‡☨☩⸸" +
-    "♇♆♅♄♃♁☿☽☾";
+    const symbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" +
+    "#$%&@!?*+=-_^~ÆØ¥ΞЖШФΩµπ√∆∑∏∫∂∇◘◙○◉◍◎◈◇◆◊" +
+    "↑↓←→↔↕↖↗↘↙☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✞✠✡✢✣✤✥✦✧" +
+    "✩✪✫✬✭✮✯巫鬼魔死血骷魑魍魎⛧⛤⛥⛦⛨†‡☨☩⸸♇♆♅♄♃♁☿☽☾"
+    .split("");
 
     const fontSize = 16;
     let columns = Math.floor(canvas.width / fontSize);
     let drops = Array(columns).fill(1);
+
+    function getRandomSymbol() {
+      return symbols[Math.floor(Math.random() * symbols.length)];
+    }
 
     function draw() {
       ctx.fillStyle = "rgba(0,0,0,0.1)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.font = fontSize + "px Courier New";
       for (let i = 0; i < drops.length; i++) {
-        const text = letters[Math.floor(Math.random() * letters.length)];
+        const text = getRandomSymbol();
         const x = i * fontSize;
         const y = drops[i] * fontSize;
         const alpha = 1 - Math.min(1, y / canvas.height);
@@ -414,12 +427,18 @@ HH======#H###############H#######################
         drops[i]++;
       }
     }
-    setInterval(draw, 33);
+    let matrixInterval = setInterval(draw, 33);
 
     window.addEventListener("resize", () => {
       sizeCanvas();
       columns = Math.floor(canvas.width / fontSize);
       drops = Array(columns).fill(1);
+    });
+
+    // Pause matrix when tab inactive (perf boost)
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) clearInterval(matrixInterval);
+      else matrixInterval = setInterval(draw, 33);
     });
   </script>
 </body>
