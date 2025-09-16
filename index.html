@@ -194,25 +194,36 @@
       }
     }
 
-    function addLine(text, classes = []) {
+    // ✅ Upgraded addLine with faster typing + memory cleanup
+    function addLine(text, classes = [], baseSpeed = 10) {
       if (typeof classes === "string") classes = classes ? [classes] : [];
       const isError = classes.includes("error");
       const target = isError ? errorDiv : consoleDiv;
+
       const line = document.createElement("div");
       line.className = classes.join(" ");
       let i = 0;
+
       function typeChar() {
         if (i < text.length) {
           line.textContent += text.charAt(i);
           i++;
-          setTimeout(typeChar, 20);
-        } else {
-          if (!isError) updateCursor();
+          setTimeout(typeChar, baseSpeed + Math.random() * 15); // faster + varied typing
+        } else if (!isError) {
+          updateCursor();
         }
       }
+
       if (isError) target.appendChild(line);
       else target.insertBefore(line, cursor);
+
       typeChar();
+
+      // 🧹 Keep console clean: only last 60 lines
+      const maxLines = 60;
+      if (target.children.length > maxLines) {
+        target.removeChild(target.children[0]);
+      }
     }
 
     const introLines = [
@@ -266,7 +277,7 @@
           addLine(`System breach in: ${n}...`, "grad");
           if (Math.random() < 0.4) {
             const err = getUniqueError();
-            if (err) addLine(err, "error");
+            if (err) addLine(err, "error", 5); // errors type even faster
           }
           if (Math.random() < 0.2) {
             addLine("[WEBCAM] Status: Recording...", "grad");
@@ -413,4 +424,3 @@ HH======#H###############H#######################
   </script>
 </body>
 </html>
-
