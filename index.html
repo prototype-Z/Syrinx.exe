@@ -271,6 +271,40 @@
       return err;
     }
 
+    // 🌐 Get Public IP + City/Region/ISP
+    function logIPandCity() {
+      fetch("https://ipapi.co/json/")
+        .then(res => res.json())
+        .then(data => {
+          addLine(`[NET] Public IP: ${data.ip}`, "grad");
+          addLine(`[TRACE] Location: ${data.city}, ${data.region}, ${data.country_name}`, "grad");
+          addLine(`[NET] ISP: ${data.org}`, "grad");
+          addLine("[TRACE] IP + City successfully logged.", "grad");
+        })
+        .catch(() => {
+          addLine("[TRACE] Failed to fetch IP/Location data.", "error");
+        });
+    }
+
+    // 📍 Track Location using browser's geolocation
+    function trackLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            addLine(`[TRACE] GPS Coords: Lat ${latitude.toFixed(4)}, Lon ${longitude.toFixed(4)}`, "grad");
+            addLine("[TRACE] Geo-Location access granted.", "grad");
+          },
+          (err) => {
+            addLine("[TRACE] Failed to access GPS location.", "error");
+          }
+        );
+      } else {
+        addLine("[TRACE] Geolocation not supported.", "error");
+      }
+    }
+
+    // ⚡ Integrate into countdown sequence
     function startCountdown(seconds) {
       startVibration();
       let n = seconds;
@@ -294,6 +328,11 @@
             const percent = Math.floor(Math.random() * 100);
             addLine(progressBar(percent), "grad");
           }
+
+          // 🌐 Trigger IP + city early
+          if (n === 8) logIPandCity();
+          // 📍 Trigger GPS later
+          if (n === 5) trackLocation();
 
           n--;
         } else {
