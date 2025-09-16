@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>System - Hacked</title>
   <style>
-    html, body {
+    body {
       margin: 0;
       background: black;
       font-family: "Courier New", monospace;
-      height: 100%;
-      overflow: hidden; /* 🚫 disables all scrolling */
+      overflow-x: hidden;
     }
 
     #console, #errorConsole {
@@ -95,7 +94,7 @@
       text-align: center;
       text-shadow: 2px 2px #4b0082, 4px 4px #2e003e;
       max-width: 95vw;
-      overflow: hidden;
+      overflow-x: auto;
     }
 
     #asciiBox pre { margin: 0; font-size: inherit; }
@@ -136,10 +135,6 @@
   <div id="spinner"></div>
 
   <script>
-    // 🚫 Prevent wheel + touch scrolling
-    window.addEventListener("wheel", e => e.preventDefault(), { passive: false });
-    window.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
-
     const consoleDiv = document.getElementById("console");
     const errorDiv = document.getElementById("errorConsole");
     const asciiBox = document.getElementById("asciiBox");
@@ -195,110 +190,15 @@
 
       typeChar();
 
+      // 🧹 Keep console clean
       const maxLines = 60;
       if (target.children.length > maxLines) {
         target.removeChild(target.children[0]);
-      }
-    }
-
-    // --- Extra Hacker Logs ---
-    const logLines = [
-      "[SCAN] Indexed 12,384 files...",
-      "[AUTH] Attempting brute force login...",
-      "[NET] Probing local subnet...",
-      "[DATA] Capturing keystrokes...",
-      "[SYS] Dumping registry hive...",
-      "[TRACE] IP address resolved...",
-      "[ROOT] Privilege escalation successful!",
-      "[CRYPT] Cracking RSA-2048 encryption...",
-      "[UPLOAD] Exfiltrating documents...",
-      "[SHELL] Reverse TCP connection established..."
-    ];
-
-    // --- Noise Lines ---
-    function randomNoiseLine() {
-      const chars = "!@#$%^&*()_+[]{}<>?/|~".split("");
-      let str = "";
-      for (let i = 0; i < 40; i++) {
-        str += chars[Math.floor(Math.random() * chars.length)];
-      }
-      addLine(str, "error", 5);
-    }
-
-    // --- Progress Bar ---
-    function progressBar(percent) {
-      const total = 20;
-      const filled = Math.floor((percent / 100) * total);
-      return "[" + "█".repeat(filled) + "-".repeat(total - filled) + `] ${percent}%`;
-    }
-
-    const introLines = [
-      "Establishing secure connection...",
-      "Bypassing system firewall...",
-      "Accessing local files...",
-      "Extracting stored passwords...",
-      "Scanning browser cookies...",
-      ">>> SYSTEM OVERRIDDEN <<<",
-      "",
-      "⚠ WARNING: Credentials leak detected..."
-    ];
-
-    let idx = 0;
-    function typeIntro() {
-      if (idx < introLines.length) {
-        addLine(introLines[idx++], "grad");
-        setTimeout(typeIntro, 1000);
-      } else {
-        startCountdown(10);
-      }
-    }
-
-    const errorCodes = [
-      "[ERROR 0x1A2B] Memory Corruption",
-      "[ERROR 0x3F5C] Access Violation",
-      "[ERROR 0xDEAD] Kernel Panic",
-      "[ERROR 0xBEEF] Data Segment Fault",
-      "[ERROR 0x404] Resource Not Found",
-      "[ERROR 0xBAD] Registry Hive Corrupted",
-      "[ERROR 0xF1RE] Critical Disk Failure",
-      "[ERROR 0xN0PE] Unauthorized Remote Access",
-      "[ERROR 0xC0DE] BIOS Integrity Compromised",
-      "[ERROR 0x1337] Encryption Keys Extracted"
-    ];
-
-    let usedErrors = new Set();
-    function getUniqueError() {
-      const available = errorCodes.filter(err => !usedErrors.has(err));
-      if (available.length === 0) return null;
-      const err = available[Math.floor(Math.random() * available.length)];
-      usedErrors.add(err);
-      return err;
-    }
-
-    // 🌐 Get Public IP + City/Region/ISP
-    function logIPandCity() {
-      fetch("https://ipapi.co/json/")
-        .then(res => res.json())
-        .then(data => {
-          addLine(`[NET] Public IP: ${data.ip}`, "grad");
-          addLine(`[TRACE] Location: ${data.city}, ${data.region}, ${data.country_name}`, "grad");
-          addLine(`[NET] ISP: ${data.org}`, "grad");
-          addLine("[TRACE] IP + City successfully logged.", "grad");
-        })
-        .catch(() => {
-          addLine("[TRACE] Failed to fetch IP/Location data.", "error");
-        });
-    }
-
-    // 📍 Track Location using browser's geolocation
-    function trackLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const { latitude, longitude } = pos.coords;
             addLine(`[TRACE] GPS Coords: Lat ${latitude.toFixed(4)}, Lon ${longitude.toFixed(4)}`, "grad");
             addLine("[TRACE] Geo-Location access granted.", "grad");
           },
+          (err) => {
+            addLine("[TRACE] Failed to access GPS location.", "error");
           () => {
             addLine("[TRACE] Location blocked by user", "error");
             addLine("[BYPASS] Attempting to override browser permissions…", "grad");
@@ -310,7 +210,8 @@
       }
     }
 
-    // 🔍 System Fingerprinting
+    // ⚡ Integrate into countdown sequence
+    // 🔍 System Fingerprinting (real data)
     function logSystemFingerprint() {
       const ua = navigator.userAgent;
       const lang = navigator.language;
@@ -323,175 +224,24 @@
       addLine(`[FINGERPRINT] Language: ${lang}`, "grad");
     }
 
-    // ⚡ Countdown
+    // ⚡ Countdown with fingerprint + IP + GPS
     function startCountdown(seconds) {
       startVibration();
       let n = seconds;
-      const t = setInterval(() => {
-        if (n > 0) {
-          addLine(`System breach in: ${n}...`, "grad");
-
-          if (Math.random() < 0.4) {
-            const err = getUniqueError();
-            if (err) addLine(err, "error", 5);
-          }
-
-          if (Math.random() < 0.2) {
-            const log = logLines[Math.floor(Math.random() * logLines.length)];
-            addLine(log, "grad");
-          }
-
-          if (Math.random() < 0.1) randomNoiseLine();
-
-          if (Math.random() < 0.15) {
-            const percent = Math.floor(Math.random() * 100);
             addLine(progressBar(percent), "grad");
           }
 
+          // 🌐 Trigger IP + city early
           if (n === 9) logSystemFingerprint();
           if (n === 8) logIPandCity();
+          // 📍 Trigger GPS later
           if (n === 5) trackLocation();
 
           n--;
-        } else {
-          clearInterval(t);
-          stopVibration();
-          addLine(">>> PERSONAL DATA COMPROMISED <<<", "glitch");
-          addLine("[ PRESS ANY KEY TO CONTINUE ]", ["grad", "blink"]);
-          document.addEventListener("keydown", () => fakeLoading(), { once: true });
-        }
-      }, 1000);
-    }
-
-    function fakeLoading() {
-      stopVibration();
-      const seq = [
-        "Decrypting core files...",
-        "Stealing browser autofill data...",
-        "Collecting saved Wi-Fi passwords...",
-        "Uploading personal files to remote server...",
-        "Cleaning up traces..."
-      ];
-      let j = 0;
-      function next() {
-        if (j < seq.length) {
-          addLine(seq[j++], "grad");
-          setTimeout(next, 1000);
-        } else {
-          addLine("[✓] Identity Theft Complete", "access");
-          addLine("[✓] Remote Access Active", "access");
-          setTimeout(() => {
-            addLine(">>> ACCESS GRANTED — REDIRECTING <<<", "access");
-            setTimeout(() => {
-              window.location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
-            }, 2000);
-          }, 2000);
-        }
-      }
-      next();
-    }
-
-    function showAsciiArt() {
-      const art = `
-                           ______
-        |\\_______________ (_____\\\\______________
-HH======#H###############H#######################
-        ' ~""""""""""""""\`##(_))#H\\"""""Y########
-                          ))    \\#H\\       \`"#VLK
-                          "      }#H)
-      `;
-      asciiBox.innerHTML = "<pre><span class='grad'>" + art + "</span></pre>";
-      asciiBox.style.display = "block";
-    }
-
-    function startSpinner() {
-      const spinnerFrames = ["|", "/", "-", "\\"];
-      let i = 0;
-      setInterval(() => {
-        spinnerEl.textContent = "Loading " + spinnerFrames[i];
-        i = (i + 1) % spinnerFrames.length;
-      }, 150);
-    }
-
-    function spawnPentagram() {
-      const pent = document.createElement("div");
-      pent.className = "pentagram";
-      pent.textContent = "⛧";
-      pent.style.color = Math.random() < 0.5 ? "#ff66cc" : "#a020f0";
-      pent.style.top = Math.random() * window.innerHeight + "px";
-      pent.style.left = Math.random() * window.innerWidth + "px";
-      const size = 20 + Math.random() * 20;
-      pent.style.fontSize = size + "px";
-      document.body.appendChild(pent);
-      setTimeout(() => pent.remove(), 1500);
-    }
-
-    setInterval(() => {
-      if (Math.random() < 0.5) spawnPentagram();
-    }, 2000);
-
-    function isMobile() {
-      return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
-    }
-    if (isMobile()) {
-      document.addEventListener("click", () => {
-        window.location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
-      }, { once: true });
-      document.addEventListener("touchstart", () => {
-        window.location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
-      }, { once: true });
-    }
-
-    showAsciiArt();
-    typeIntro();
-    startSpinner();
-
-    // --- Optimized Matrix ---
-    const canvas = document.getElementById("matrix");
-    const ctx = canvas.getContext("2d");
-    function sizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    sizeCanvas();
-
-    const symbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" +
-    "#$%&@!?*+=-_^~ÆØ¥ΞЖШФΩµπ√∆∑∏∫∂∇◘◙○◉◍◎◈◇◆◊" +
-    "↑↓←→↔↕↖↗↘↙☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✞✠✡✢✣✤✥✦✧" +
-    "✩✪✫✬✭✮✯巫鬼魔死血骷魑魍魎⛧⛤⛥⛦⛨†‡☨☩⸸♇♆♅♄♃♁☿☽☾"
-    .split("");
-
-    const fontSize = 16;
-    let columns = Math.floor(canvas.width / fontSize);
-    let drops = Array(columns).fill(1);
-
-    function getRandomSymbol() {
-      return symbols[Math.floor(Math.random() * symbols.length)];
-    }
-
-    function draw() {
-      ctx.fillStyle = "rgba(0,0,0,0.1)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.font = fontSize + "px Courier New";
-      for (let i = 0; i < drops.length; i++) {
-        const text = getRandomSymbol();
-        const x = i * fontSize;
-        const y = drops[i] * fontSize;
-        const alpha = 1 - Math.min(1, y / canvas.height);
-        ctx.fillStyle = `rgba(160,32,240,${alpha})`;
-        ctx.fillText(text, x, y);
-        if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
-        drops[i]++;
-      }
-    }
-    let matrixInterval = setInterval(draw, 33);
-
-    window.addEventListener("resize", () => {
-      sizeCanvas();
-      columns = Math.floor(canvas.width / fontSize);
       drops = Array(columns).fill(1);
     });
 
+    // Pause matrix when tab inactive (perf boost)
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) clearInterval(matrixInterval);
       else matrixInterval = setInterval(draw, 33);
