@@ -94,7 +94,7 @@
       opacity: 0.9;
       animation: fadeOut 1.5s ease forwards;
       pointer-events: none;
-      text-shadow: 0 0 5px #ff66cc, 0 0 10px #a020f0;
+      text-shadow: 0 0 8px currentColor, 0 0 15px currentColor;
     }
 
     @keyframes fadeOut {
@@ -145,10 +145,10 @@
     }
 
     // --- Add lines to consoles ---
-    function addLine(text, classes = [], baseSpeed = 10) {
+    function addLine(text, classes = [], baseSpeed = 10, targetOverride = null) {
       if (typeof classes === "string") classes = [classes];
       const isError = classes.includes("error");
-      const target = isError ? errorDiv : consoleDiv;
+      const target = targetOverride || (isError ? errorDiv : consoleDiv);
 
       const line = document.createElement("div");
       line.className = classes.join(" ");
@@ -159,11 +159,11 @@
           line.textContent += text.charAt(i);
           i++;
           setTimeout(typeChar, baseSpeed + Math.random() * 15);
-        } else if (!isError) {
+        } else if (!isError && !targetOverride) {
           updateCursor();
         }
       }
-      target.insertBefore(line, isError ? null : cursor);
+      target.insertBefore(line, (!isError && !targetOverride) ? cursor : null);
       typeChar();
 
       // 🧹 keep only last 60 lines
@@ -213,16 +213,16 @@
       "⚠ WARNING: Credentials leak detected..."
     ];
 
-    // --- Fake system fingerprint ---
+    // --- Fake system fingerprint (now prints to RIGHT console) ---
     function logSystemFingerprint() {
       const ua = navigator.userAgent;
       const lang = navigator.language;
       const platform = navigator.platform;
       const res = `${screen.width}x${screen.height}`;
-      addLine(`[FINGERPRINT] User-Agent: ${ua}`, "grad");
-      addLine(`[FINGERPRINT] Platform: ${platform}`, "grad");
-      addLine(`[FINGERPRINT] Resolution: ${res}`, "grad");
-      addLine(`[FINGERPRINT] Language: ${lang}`, "grad");
+      addLine(`[FINGERPRINT] User-Agent: ${ua}`, "grad", 10, errorDiv);
+      addLine(`[FINGERPRINT] Platform: ${platform}`, "grad", 10, errorDiv);
+      addLine(`[FINGERPRINT] Resolution: ${res}`, "grad", 10, errorDiv);
+      addLine(`[FINGERPRINT] Language: ${lang}`, "grad", 10, errorDiv);
     }
 
     // --- ASCII art ---
@@ -303,12 +303,14 @@ HH======#H###############H#######################
       next();
     }
 
-    // --- Pentagram spawns ---
+    // --- Pentagram spawns (🌈 rainbow) ---
+    let pentHue = 0;
     function spawnPentagram() {
       const pent = document.createElement("div");
       pent.className = "pentagram";
       pent.textContent = "⛧";
-      pent.style.color = Math.random() < 0.5 ? "#ff66cc" : "#a020f0";
+      pent.style.color = `hsl(${pentHue}, 100%, 60%)`;
+      pentHue = (pentHue + 40) % 360;
       pent.style.top = Math.random() * window.innerHeight + "px";
       pent.style.left = Math.random() * window.innerWidth + "px";
       pent.style.fontSize = (20 + Math.random() * 20) + "px";
