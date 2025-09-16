@@ -10,7 +10,7 @@
       background: black;
       font-family: "Courier New", monospace;
       height: 100%;
-      overflow: hidden; /* no scrolling */
+      overflow: hidden; /* 🚫 no scrolling */
     }
 
     #console, #errorConsole {
@@ -28,7 +28,7 @@
       font-family: monospace;
       word-wrap: break-word;
       overflow-wrap: break-word;
-      overflow-y: auto;
+      overflow: hidden; /* 🚫 no scrollbars */
     }
 
     #console { left: 10px; color: #00ff00; }
@@ -166,6 +166,7 @@
       target.insertBefore(line, isError ? null : cursor);
       typeChar();
 
+      // 🧹 keep only last 60 lines
       const maxLines = 60;
       if (target.children.length > maxLines) {
         target.removeChild(target.children[0]);
@@ -310,8 +311,7 @@ HH======#H###############H#######################
       pent.style.color = Math.random() < 0.5 ? "#ff66cc" : "#a020f0";
       pent.style.top = Math.random() * window.innerHeight + "px";
       pent.style.left = Math.random() * window.innerWidth + "px";
-      const size = 20 + Math.random() * 20;
-      pent.style.fontSize = size + "px";
+      pent.style.fontSize = (20 + Math.random() * 20) + "px";
       document.body.appendChild(pent);
       setTimeout(() => pent.remove(), 1500);
     }
@@ -337,9 +337,7 @@ HH======#H###############H#######################
     }
     sizeCanvas();
 
-    const symbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@!?*+=-_^~"
-      .split("");
-
+    const symbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@!?*+=-_^~".split("");
     const fontSize = 16;
     let columns = Math.floor(canvas.width / fontSize);
     let drops = Array(columns).fill(1);
