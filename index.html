@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>System - Hacked</title>
   <style>
-    body {
+    html, body {
       margin: 0;
       background: black;
       font-family: "Courier New", monospace;
-      overflow-x: hidden;
+      height: 100%;
+      overflow: hidden; /* 🚫 disables all scrolling */
     }
 
     #console, #errorConsole {
@@ -94,7 +95,7 @@
       text-align: center;
       text-shadow: 2px 2px #4b0082, 4px 4px #2e003e;
       max-width: 95vw;
-      overflow: hidden; /* ✅ No scrollbars */
+      overflow: hidden;
     }
 
     #asciiBox pre { margin: 0; font-size: inherit; }
@@ -135,6 +136,10 @@
   <div id="spinner"></div>
 
   <script>
+    // 🚫 Prevent wheel + touch scrolling
+    window.addEventListener("wheel", e => e.preventDefault(), { passive: false });
+    window.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
+
     const consoleDiv = document.getElementById("console");
     const errorDiv = document.getElementById("errorConsole");
     const asciiBox = document.getElementById("asciiBox");
@@ -305,7 +310,7 @@
       }
     }
 
-    // 🔍 System Fingerprinting (real data)
+    // 🔍 System Fingerprinting
     function logSystemFingerprint() {
       const ua = navigator.userAgent;
       const lang = navigator.language;
@@ -318,7 +323,7 @@
       addLine(`[FINGERPRINT] Language: ${lang}`, "grad");
     }
 
-    // ⚡ Countdown with fingerprint + IP + GPS
+    // ⚡ Countdown
     function startCountdown(seconds) {
       startVibration();
       let n = seconds;
