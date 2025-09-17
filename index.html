@@ -46,8 +46,11 @@
       100% { text-shadow: 2px 0 red; }
     }
 
+    /* ✅ Logs = green (so they show up) */
+    .grad { color: #00ff00; }
+
     /* 🎨 ASCII art purple ↔ pink */
-    .grad {
+    .asciiGrad {
       background: linear-gradient(90deg, #a020f0, #ff66cc, #a020f0);
       background-size: 300% 300%;
       -webkit-background-clip: text;
@@ -242,7 +245,7 @@ HH======#H###############H#######################
                           ))    \\#H\\       \`"#VLK
                           "      }#H)
       `;
-      asciiBox.innerHTML = "<pre><span class='grad'>" + art + "</span></pre>";
+      asciiBox.innerHTML = "<pre><span class='asciiGrad'>" + art + "</span></pre>";
     }
 
     // Spinner
