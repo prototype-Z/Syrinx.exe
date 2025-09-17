@@ -28,7 +28,7 @@
       font-family: monospace;
       word-wrap: break-word;
       overflow-wrap: break-word;
-      overflow: hidden;
+      overflow: hidden; /* 🚫 no scrollbars */
     }
 
     #console { left: 10px; color: #00ff00; }
@@ -46,7 +46,7 @@
       100% { text-shadow: 2px 0 red; }
     }
 
-    /* 🌌 Fingerprint crimson → grey */
+    /* 🌌 Fingerprint animated crimson → grey */
     .fingerprintLog {
       font-weight: bold;
       background: linear-gradient(90deg, crimson, grey, crimson);
@@ -57,22 +57,6 @@
     }
 
     @keyframes fingerprintShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    /* 🌐 ISP white ↔ black */
-    .ispLog {
-      font-weight: bold;
-      background: linear-gradient(90deg, white, black, white);
-      background-size: 300% 300%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: ispShift 4s ease infinite;
-    }
-
-    @keyframes ispShift {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
@@ -176,7 +160,7 @@
       }
     }
 
-    // --- Add lines ---
+    // --- Add lines to consoles ---
     function addLine(text, classes = [], baseSpeed = 10, targetOverride = null) {
       if (typeof classes === "string") classes = [classes];
       const isError = classes.includes("error");
@@ -198,6 +182,7 @@
       target.insertBefore(line, (!isError && !targetOverride) ? cursor : null);
       typeChar();
 
+      // 🧹 keep only last 60 lines
       const maxLines = 60;
       if (target.children.length > maxLines) {
         target.removeChild(target.children[0]);
@@ -218,7 +203,7 @@
       "[SHELL] Reverse TCP connection established..."
     ];
 
-    // Errors (unique)
+    // Unique error pool
     const errorCodes = [
       "[ERROR 0x1A2B] Memory Corruption",
       "[ERROR 0x3F5C] Access Violation",
@@ -266,7 +251,7 @@
       "⚠ WARNING: Credentials leak detected..."
     ];
 
-    // --- Fingerprint info ---
+    // --- Fake system fingerprint (crimson → grey) ---
     function logSystemFingerprint() {
       const ua = navigator.userAgent;
       const lang = navigator.language;
@@ -285,7 +270,7 @@
         .then(data => {
           addLine(`[NET] Public IP: ${data.ip}`, "grad", 10, errorDiv);
           addLine(`[TRACE] Location: ${data.city}, ${data.region}, ${data.country_name}`, "grad", 10, errorDiv);
-          addLine(`[NET] ISP: ${data.org}`, "ispLog", 10, errorDiv);
+          addLine(`[NET] ISP: ${data.org}`, "grad", 10, errorDiv);
         })
         .catch(() => {
           addLine("[TRACE] Failed to fetch IP/Location data.", "error");
@@ -361,7 +346,7 @@ HH======#H###############H#######################
       }, 1000);
     }
 
-    // --- Fake loading ---
+    // --- Fake loading after breach ---
     function fakeLoading() {
       stopVibration();
       const seq = [
@@ -390,7 +375,7 @@ HH======#H###############H#######################
       next();
     }
 
-    // --- Pentagrams (🌈 rainbow) ---
+    // --- Pentagram spawns (🌈 rainbow) ---
     let pentHue = 0;
     function spawnPentagram() {
       const pent = document.createElement("div");
@@ -406,7 +391,7 @@ HH======#H###############H#######################
     }
     setInterval(() => { if (Math.random() < 0.5) spawnPentagram(); }, 2000);
 
-    // --- Intro ---
+    // --- Intro sequence ---
     let idx = 0;
     function typeIntro() {
       if (idx < introLines.length) {
@@ -417,7 +402,7 @@ HH======#H###############H#######################
       }
     }
 
-    // --- Matrix RGB ---
+    // --- Matrix background (🌈 RGB version) ---
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas() {
@@ -454,4 +439,21 @@ HH======#H###############H#######################
     }
     let matrixInterval = setInterval(draw, 33);
 
-    window.addEventListener("resize", ()
+    window.addEventListener("resize", () => {
+      sizeCanvas();
+      columns = Math.floor(canvas.width / fontSize);
+      drops = Array(columns).fill(1);
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) clearInterval(matrixInterval);
+      else matrixInterval = setInterval(draw, 33);
+    });
+
+    // --- Start ---
+    showAsciiArt();
+    startSpinner();
+    typeIntro();
+  </script>
+</body>
+</html>
