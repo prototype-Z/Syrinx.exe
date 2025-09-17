@@ -46,22 +46,6 @@
       100% { text-shadow: 2px 0 red; }
     }
 
-    /* 🌌 Fingerprint animated crimson → grey */
-    .fingerprintLog {
-      font-weight: bold;
-      background: linear-gradient(90deg, crimson, grey, crimson);
-      background-size: 300% 300%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: fingerprintShift 3s ease infinite;
-    }
-
-    @keyframes fingerprintShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
     #asciiBox {
       position: fixed;
       top: 50%;
@@ -229,16 +213,16 @@
       "⚠ WARNING: Credentials leak detected..."
     ];
 
-    // --- Fake system fingerprint (now crimson → grey animated) ---
+    // --- Fake system fingerprint (now prints to RIGHT console) ---
     function logSystemFingerprint() {
       const ua = navigator.userAgent;
       const lang = navigator.language;
       const platform = navigator.platform;
       const res = `${screen.width}x${screen.height}`;
-      addLine(`[FINGERPRINT] User-Agent: ${ua}`, "fingerprintLog", 10, errorDiv);
-      addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10, errorDiv);
-      addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10, errorDiv);
-      addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10, errorDiv);
+      addLine(`[FINGERPRINT] User-Agent: ${ua}`, "grad", 10, errorDiv);
+      addLine(`[FINGERPRINT] Platform: ${platform}`, "grad", 10, errorDiv);
+      addLine(`[FINGERPRINT] Resolution: ${res}`, "grad", 10, errorDiv);
+      addLine(`[FINGERPRINT] Language: ${lang}`, "grad", 10, errorDiv);
     }
 
     // --- ASCII art ---
