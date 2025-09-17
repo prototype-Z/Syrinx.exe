@@ -267,6 +267,9 @@ HH======#H###############H#######################
           clearInterval(t);
           addLine(">>> PERSONAL DATA COMPROMISED <<<", "glitch");
           addLine("[ PRESS ANY KEY TO CONTINUE ]", ["grad", "blink"]);
+          document.addEventListener("keydown", () => {
+            window.location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
+          }, { once: true });
         }
       }, 1000);
     }
@@ -282,7 +285,7 @@ HH======#H###############H#######################
       }
     }
 
-    // Matrix background RGB
+    // Matrix background with cursed symbols
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas() {
@@ -291,14 +294,14 @@ HH======#H###############H#######################
     }
     sizeCanvas();
     const symbols = "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧" +
-                "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿" +
-                "鬼魔死血骷魑魍魎" +
-                "⛧⛤⛥⛦⛨†‡☨☩⸸" +
-                "♇♆♅♄♃♁☿☽☾" +
-                "∆∑∏∫∂∇Ω¥ΞЖШФ" +
-                "◘◙○◉◍◎◈◇◆◊" +
-                "↑↓←→↔↕↖↗↘↙" +
-                "!@#$%^&*()_+=-|<>?/".split("");
+                    "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿" +
+                    "卐卍巫鬼魔死血骷魑魍魎" +
+                    "⛧⛤⛥⛦⛨†‡☨☩⸸" +
+                    "♇♆♅♄♃♁☿☽☾" +
+                    "∆∑∏∫∂∇Ω¥ΞЖШФ" +
+                    "◘◙○◉◍◎◈◇◆◊" +
+                    "↑↓←→↔↕↖↗↘↙" +
+                    "!@#$%^&*()_+=-|<>?/".split("");
     const fontSize = 16;
     let columns = Math.floor(canvas.width / fontSize);
     let drops = Array(columns).fill(1);
@@ -329,4 +332,3 @@ HH======#H###############H#######################
   </script>
 </body>
 </html>
-
