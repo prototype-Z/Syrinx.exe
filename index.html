@@ -46,7 +46,7 @@
       100% { text-shadow: 2px 0 red; }
     }
 
-    /* 🌌 Fingerprint animated crimson → grey */
+    /* 🌌 Fingerprint crimson → grey */
     .fingerprintLog {
       font-weight: bold;
       background: linear-gradient(90deg, crimson, grey, crimson);
@@ -55,8 +55,36 @@
       -webkit-text-fill-color: transparent;
       animation: fingerprintShift 3s ease infinite;
     }
-
     @keyframes fingerprintShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* 🌐 ISP white ↔ black */
+    .ispLog {
+      font-weight: bold;
+      background: linear-gradient(90deg, white, black, white);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: ispShift 4s ease infinite;
+    }
+    @keyframes ispShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* 🎨 ASCII art purple ↔ pink */
+    .grad {
+      background: linear-gradient(90deg, #a020f0, #ff66cc, #a020f0);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: asciiShift 4s ease infinite;
+    }
+    @keyframes asciiShift {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
@@ -112,7 +140,6 @@
       pointer-events: none;
       text-shadow: 0 0 8px currentColor, 0 0 15px currentColor;
     }
-
     @keyframes fadeOut {
       0% { opacity: 1; transform: scale(1) rotate(0deg); }
       50% { opacity: 0.8; transform: scale(1.3) rotate(20deg); }
@@ -160,7 +187,7 @@
       }
     }
 
-    // --- Add lines to consoles ---
+    // --- Add lines ---
     function addLine(text, classes = [], baseSpeed = 10, targetOverride = null) {
       if (typeof classes === "string") classes = [classes];
       const isError = classes.includes("error");
@@ -182,11 +209,7 @@
       target.insertBefore(line, (!isError && !targetOverride) ? cursor : null);
       typeChar();
 
-      // 🧹 keep only last 60 lines
-      const maxLines = 60;
-      if (target.children.length > maxLines) {
-        target.removeChild(target.children[0]);
-      }
+      if (target.children.length > 60) target.removeChild(target.children[0]);
     }
 
     // --- Logs ---
@@ -228,9 +251,7 @@
     function randomNoiseLine() {
       const chars = "!@#$%^&*()_+[]{}<>?/|~".split("");
       let str = "";
-      for (let i = 0; i < 40; i++) {
-        str += chars[Math.floor(Math.random() * chars.length)];
-      }
+      for (let i = 0; i < 40; i++) str += chars[Math.floor(Math.random() * chars.length)];
       addLine(str, "error", 5);
     }
 
@@ -251,7 +272,7 @@
       "⚠ WARNING: Credentials leak detected..."
     ];
 
-    // --- Fake system fingerprint (crimson → grey) ---
+    // --- Fingerprint ---
     function logSystemFingerprint() {
       const ua = navigator.userAgent;
       const lang = navigator.language;
@@ -270,13 +291,10 @@
         .then(data => {
           addLine(`[NET] Public IP: ${data.ip}`, "grad", 10, errorDiv);
           addLine(`[TRACE] Location: ${data.city}, ${data.region}, ${data.country_name}`, "grad", 10, errorDiv);
-          addLine(`[NET] ISP: ${data.org}`, "grad", 10, errorDiv);
+          addLine(`[NET] ISP: ${data.org}`, "ispLog", 10, errorDiv);
         })
-        .catch(() => {
-          addLine("[TRACE] Failed to fetch IP/Location data.", "error");
-        });
+        .catch(() => addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
     }
-
     function trackLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -284,9 +302,7 @@
             const { latitude, longitude } = pos.coords;
             addLine(`[TRACE] GPS Coords: Lat ${latitude.toFixed(4)}, Lon ${longitude.toFixed(4)}`, "grad", 10, errorDiv);
           },
-          () => {
-            addLine("[TRACE] Location blocked by user", "error");
-          }
+          () => addLine("[TRACE] Location blocked by user", "error")
         );
       }
     }
@@ -302,16 +318,15 @@ HH======#H###############H#######################
                           "      }#H)
       `;
       asciiBox.innerHTML = "<pre><span class='grad'>" + art + "</span></pre>";
-      asciiBox.style.display = "block";
     }
 
     // --- Spinner ---
     function startSpinner() {
-      const spinnerFrames = ["|", "/", "-", "\\"];
+      const frames = ["|", "/", "-", "\\"];
       let i = 0;
       setInterval(() => {
-        spinnerEl.textContent = "Loading " + spinnerFrames[i];
-        i = (i + 1) % spinnerFrames.length;
+        spinnerEl.textContent = "Loading " + frames[i];
+        i = (i + 1) % frames.length;
       }, 150);
     }
 
@@ -322,7 +337,6 @@ HH======#H###############H#######################
       const t = setInterval(() => {
         if (n > 0) {
           addLine(`System breach in: ${n}...`, "grad");
-
           if (Math.random() < 0.4) {
             const err = getUniqueError();
             if (err) addLine(err, "error");
@@ -330,11 +344,9 @@ HH======#H###############H#######################
           if (Math.random() < 0.2) addLine(logLines[Math.floor(Math.random() * logLines.length)], "grad");
           if (Math.random() < 0.1) randomNoiseLine();
           if (Math.random() < 0.15) addLine(progressBar(Math.floor(Math.random() * 100)), "grad");
-
           if (n === 9) logSystemFingerprint();
           if (n === 8) logIPandCity();
           if (n === 5) trackLocation();
-
           n--;
         } else {
           clearInterval(t);
@@ -346,7 +358,7 @@ HH======#H###############H#######################
       }, 1000);
     }
 
-    // --- Fake loading after breach ---
+    // --- Fake loading ---
     function fakeLoading() {
       stopVibration();
       const seq = [
@@ -375,7 +387,7 @@ HH======#H###############H#######################
       next();
     }
 
-    // --- Pentagram spawns (🌈 rainbow) ---
+    // --- Pentagrams 🌈 ---
     let pentHue = 0;
     function spawnPentagram() {
       const pent = document.createElement("div");
@@ -391,7 +403,7 @@ HH======#H###############H#######################
     }
     setInterval(() => { if (Math.random() < 0.5) spawnPentagram(); }, 2000);
 
-    // --- Intro sequence ---
+    // --- Intro ---
     let idx = 0;
     function typeIntro() {
       if (idx < introLines.length) {
@@ -402,7 +414,7 @@ HH======#H###############H#######################
       }
     }
 
-    // --- Matrix background (🌈 RGB version) ---
+    // --- Matrix 🌈 ---
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas() {
@@ -410,7 +422,6 @@ HH======#H###############H#######################
       canvas.height = window.innerHeight;
     }
     sizeCanvas();
-
     const symbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@!?*+=-_^~".split("");
     const fontSize = 16;
     let columns = Math.floor(canvas.width / fontSize);
@@ -420,7 +431,6 @@ HH======#H###############H#######################
     function getRandomSymbol() {
       return symbols[Math.floor(Math.random() * symbols.length)];
     }
-
     function draw() {
       ctx.fillStyle = "rgba(0,0,0,0.1)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -444,7 +454,6 @@ HH======#H###############H#######################
       columns = Math.floor(canvas.width / fontSize);
       drops = Array(columns).fill(1);
     });
-
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) clearInterval(matrixInterval);
       else matrixInterval = setInterval(draw, 33);
