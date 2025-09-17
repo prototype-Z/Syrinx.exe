@@ -172,7 +172,7 @@
     consoleDiv.appendChild(cursor);
     function updateCursor() { consoleDiv.appendChild(cursor); }
 
-    // --- Add lines ---
+    // Add lines
     function addLine(text, classes = [], baseSpeed = 10, targetOverride = null) {
       if (typeof classes === "string") classes = [classes];
       const isError = classes.includes("error");
@@ -181,7 +181,6 @@
       const line = document.createElement("div");
       line.className = classes.join(" ");
       let i = 0;
-
       function typeChar() {
         if (i < text.length) {
           line.textContent += text.charAt(i);
@@ -197,21 +196,19 @@
       if (target.children.length > 60) target.removeChild(target.children[0]);
     }
 
-    // --- Logs ---
-    const logLines = [
-      "[SCAN] Indexed 12,384 files...",
-      "[AUTH] Attempting brute force login...",
-      "[NET] Probing local subnet...",
-      "[DATA] Capturing keystrokes...",
-      "[SYS] Dumping registry hive...",
-      "[TRACE] IP address resolved...",
-      "[ROOT] Privilege escalation successful!",
-      "[CRYPT] Cracking RSA-2048 encryption...",
-      "[UPLOAD] Exfiltrating documents...",
-      "[SHELL] Reverse TCP connection established..."
+    // Intro lines
+    const introLines = [
+      "Establishing secure connection...",
+      "Bypassing system firewall...",
+      "Accessing local files...",
+      "Extracting stored passwords...",
+      "Scanning browser cookies...",
+      ">>> SYSTEM OVERRIDDEN <<<",
+      "",
+      "⚠ WARNING: Credentials leak detected..."
     ];
 
-    // --- Fingerprint ---
+    // Fingerprint
     function logSystemFingerprint() {
       const ua = navigator.userAgent;
       const lang = navigator.language;
@@ -223,7 +220,7 @@
       addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10, errorDiv);
     }
 
-    // --- IP + City/Region/ISP ---
+    // IP + City/Region/ISP
     function logIPandCity() {
       fetch("https://ipapi.co/json/")
         .then(res => res.json())
@@ -235,7 +232,7 @@
         .catch(() => addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
     }
 
-    // --- ASCII art ---
+    // ASCII art
     function showAsciiArt() {
       const art = `
                            ______
@@ -248,7 +245,7 @@ HH======#H###############H#######################
       asciiBox.innerHTML = "<pre><span class='grad'>" + art + "</span></pre>";
     }
 
-    // --- Spinner ---
+    // Spinner
     function startSpinner() {
       const frames = ["|", "/", "-", "\\"];
       let i = 0;
@@ -258,75 +255,24 @@ HH======#H###############H#######################
       }, 150);
     }
 
-    // --- Countdown ---
+    // Countdown
     function startCountdown(seconds) {
       let n = seconds;
       const t = setInterval(() => {
         if (n > 0) {
           addLine(`System breach in: ${n}...`, "grad");
-
-          if (Math.random() < 0.4) addLine("[ERROR] Critical Failure", "error");
-          if (Math.random() < 0.2) addLine(logLines[Math.floor(Math.random() * logLines.length)], "grad");
-          if (Math.random() < 0.15) addLine(`[PROGRESS] ${Math.floor(Math.random() * 100)}%`, "grad");
-
           if (n === 9) logSystemFingerprint();
           if (n === 8) logIPandCity();
-
           n--;
         } else {
           clearInterval(t);
           addLine(">>> PERSONAL DATA COMPROMISED <<<", "glitch");
           addLine("[ PRESS ANY KEY TO CONTINUE ]", ["grad", "blink"]);
-          document.addEventListener("keydown", () => fakeLoading(), { once: true });
         }
       }, 1000);
     }
 
-    // --- Fake loading ---
-    function fakeLoading() {
-      const seq = [
-        "Decrypting core files...",
-        "Stealing browser autofill data...",
-        "Collecting saved Wi-Fi passwords...",
-        "Uploading personal files to remote server...",
-        "Cleaning up traces..."
-      ];
-      let j = 0;
-      function next() {
-        if (j < seq.length) {
-          addLine(seq[j++], "grad");
-          setTimeout(next, 1000);
-        } else {
-          addLine("[✓] Identity Theft Complete", "access");
-          addLine("[✓] Remote Access Active", "access");
-          setTimeout(() => {
-            addLine(">>> ACCESS GRANTED — REDIRECTING <<<", "access");
-            setTimeout(() => {
-              window.location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
-            }, 2000);
-          }, 2000);
-        }
-      }
-      next();
-    }
-
-    // --- Pentagrams 🌈 ---
-    let pentHue = 0;
-    function spawnPentagram() {
-      const pent = document.createElement("div");
-      pent.className = "pentagram";
-      pent.textContent = "⛧";
-      pent.style.color = `hsl(${pentHue}, 100%, 60%)`;
-      pentHue = (pentHue + 40) % 360;
-      pent.style.top = Math.random() * window.innerHeight + "px";
-      pent.style.left = Math.random() * window.innerWidth + "px";
-      pent.style.fontSize = (20 + Math.random() * 20) + "px";
-      document.body.appendChild(pent);
-      setTimeout(() => pent.remove(), 1500);
-    }
-    setInterval(() => { if (Math.random() < 0.5) spawnPentagram(); }, 2000);
-
-    // --- Intro ---
+    // Intro sequence
     let idx = 0;
     function typeIntro() {
       if (idx < introLines.length) {
@@ -337,7 +283,7 @@ HH======#H###############H#######################
       }
     }
 
-    // --- Matrix RGB ---
+    // Matrix background RGB
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas() {
@@ -350,10 +296,7 @@ HH======#H###############H#######################
     let columns = Math.floor(canvas.width / fontSize);
     let drops = Array(columns).fill(1);
     let hue = 0;
-
-    function getRandomSymbol() {
-      return symbols[Math.floor(Math.random() * symbols.length)];
-    }
+    function getRandomSymbol() { return symbols[Math.floor(Math.random() * symbols.length)]; }
     function draw() {
       ctx.fillStyle = "rgba(0,0,0,0.1)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -372,17 +315,7 @@ HH======#H###############H#######################
     }
     let matrixInterval = setInterval(draw, 33);
 
-    window.addEventListener("resize", () => {
-      sizeCanvas();
-      columns = Math.floor(canvas.width / fontSize);
-      drops = Array(columns).fill(1);
-    });
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) clearInterval(matrixInterval);
-      else matrixInterval = setInterval(draw, 33);
-    });
-
-    // --- Start ---
+    // Start
     showAsciiArt();
     startSpinner();
     typeIntro();
