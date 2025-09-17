@@ -203,6 +203,28 @@
       "[SHELL] Reverse TCP connection established..."
     ];
 
+    // Unique error pool
+    const errorCodes = [
+      "[ERROR 0x1A2B] Memory Corruption",
+      "[ERROR 0x3F5C] Access Violation",
+      "[ERROR 0xDEAD] Kernel Panic",
+      "[ERROR 0xBEEF] Data Segment Fault",
+      "[ERROR 0x404] Resource Not Found",
+      "[ERROR 0xBAD] Registry Hive Corrupted",
+      "[ERROR 0xF1RE] Critical Disk Failure",
+      "[ERROR 0xN0PE] Unauthorized Remote Access",
+      "[ERROR 0xC0DE] BIOS Integrity Compromised",
+      "[ERROR 0x1337] Encryption Keys Extracted"
+    ];
+    let usedErrors = new Set();
+    function getUniqueError() {
+      const available = errorCodes.filter(err => !usedErrors.has(err));
+      if (available.length === 0) return null;
+      const err = available[Math.floor(Math.random() * available.length)];
+      usedErrors.add(err);
+      return err;
+    }
+
     function randomNoiseLine() {
       const chars = "!@#$%^&*()_+[]{}<>?/|~".split("");
       let str = "";
@@ -229,7 +251,7 @@
       "⚠ WARNING: Credentials leak detected..."
     ];
 
-    // --- Fake system fingerprint (now crimson → grey animated) ---
+    // --- Fake system fingerprint (crimson → grey) ---
     function logSystemFingerprint() {
       const ua = navigator.userAgent;
       const lang = navigator.language;
@@ -239,6 +261,34 @@
       addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10, errorDiv);
       addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10, errorDiv);
       addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10, errorDiv);
+    }
+
+    // --- IP + Geo ---
+    function logIPandCity() {
+      fetch("https://ipapi.co/json/")
+        .then(res => res.json())
+        .then(data => {
+          addLine(`[NET] Public IP: ${data.ip}`, "grad", 10, errorDiv);
+          addLine(`[TRACE] Location: ${data.city}, ${data.region}, ${data.country_name}`, "grad", 10, errorDiv);
+          addLine(`[NET] ISP: ${data.org}`, "grad", 10, errorDiv);
+        })
+        .catch(() => {
+          addLine("[TRACE] Failed to fetch IP/Location data.", "error");
+        });
+    }
+
+    function trackLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            const { latitude, longitude } = pos.coords;
+            addLine(`[TRACE] GPS Coords: Lat ${latitude.toFixed(4)}, Lon ${longitude.toFixed(4)}`, "grad", 10, errorDiv);
+          },
+          () => {
+            addLine("[TRACE] Location blocked by user", "error");
+          }
+        );
+      }
     }
 
     // --- ASCII art ---
@@ -273,12 +323,18 @@ HH======#H###############H#######################
         if (n > 0) {
           addLine(`System breach in: ${n}...`, "grad");
 
-          if (Math.random() < 0.4) addLine("[ERROR] Critical Failure", "error");
+          if (Math.random() < 0.4) {
+            const err = getUniqueError();
+            if (err) addLine(err, "error");
+          }
           if (Math.random() < 0.2) addLine(logLines[Math.floor(Math.random() * logLines.length)], "grad");
           if (Math.random() < 0.1) randomNoiseLine();
           if (Math.random() < 0.15) addLine(progressBar(Math.floor(Math.random() * 100)), "grad");
 
           if (n === 9) logSystemFingerprint();
+          if (n === 8) logIPandCity();
+          if (n === 5) trackLocation();
+
           n--;
         } else {
           clearInterval(t);
