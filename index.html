@@ -46,7 +46,7 @@
       100% { text-shadow: 2px 0 red; }
     }
 
-    /* ✅ Logs = green (so they show up) */
+    /* ✅ Logs plain green */
     .grad { color: #00ff00; }
 
     /* 🎨 ASCII art purple ↔ pink */
@@ -72,6 +72,7 @@
       -webkit-text-fill-color: transparent;
       animation: fingerprintShift 3s ease infinite;
     }
+
     @keyframes fingerprintShift {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
@@ -87,6 +88,7 @@
       -webkit-text-fill-color: transparent;
       animation: ispShift 4s ease infinite;
     }
+
     @keyframes ispShift {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
@@ -159,10 +161,6 @@
   <div id="spinner"></div>
 
   <script>
-    // 🚫 Prevent scrolling
-    window.addEventListener("wheel", e => e.preventDefault(), { passive: false });
-    window.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
-
     const consoleDiv = document.getElementById("console");
     const errorDiv = document.getElementById("errorConsole");
     const asciiBox = document.getElementById("asciiBox");
@@ -211,7 +209,6 @@
       "⚠ WARNING: Credentials leak detected..."
     ];
 
-    // Fingerprint
     function logSystemFingerprint() {
       const ua = navigator.userAgent;
       const lang = navigator.language;
@@ -223,7 +220,6 @@
       addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10, errorDiv);
     }
 
-    // IP + City/Region/ISP
     function logIPandCity() {
       fetch("https://ipapi.co/json/")
         .then(res => res.json())
