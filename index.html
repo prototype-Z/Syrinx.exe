@@ -10,7 +10,7 @@
       background: black;
       font-family: "Courier New", monospace;
       height: 100%;
-      overflow: hidden; /* 🚫 no scrolling */
+      overflow: hidden;
     }
 
     #console, #errorConsole {
@@ -28,7 +28,7 @@
       font-family: monospace;
       word-wrap: break-word;
       overflow-wrap: break-word;
-      overflow: hidden; /* 🚫 no scrollbars */
+      overflow: hidden;
     }
 
     #console { left: 10px; color: #00ff00; }
@@ -46,10 +46,8 @@
       100% { text-shadow: 2px 0 red; }
     }
 
-    /* ✅ Logs plain green */
     .grad { color: #00ff00; }
 
-    /* 🎨 ASCII art purple ↔ pink */
     .asciiGrad {
       background: linear-gradient(90deg, #a020f0, #ff66cc, #a020f0);
       background-size: 300% 300%;
@@ -63,7 +61,6 @@
       100% { background-position: 0% 50%; }
     }
 
-    /* 🌌 Fingerprint crimson → grey */
     .fingerprintLog {
       font-weight: bold;
       background: linear-gradient(90deg, crimson, grey, crimson);
@@ -72,14 +69,12 @@
       -webkit-text-fill-color: transparent;
       animation: fingerprintShift 3s ease infinite;
     }
-
     @keyframes fingerprintShift {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
 
-    /* 🌐 ISP white ↔ black */
     .ispLog {
       font-weight: bold;
       background: linear-gradient(90deg, white, black, white);
@@ -88,7 +83,6 @@
       -webkit-text-fill-color: transparent;
       animation: ispShift 4s ease infinite;
     }
-
     @keyframes ispShift {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
@@ -166,14 +160,33 @@
     const asciiBox = document.getElementById("asciiBox");
     const spinnerEl = document.getElementById("spinner");
 
-    // Cursor
     const cursor = document.createElement("span");
     cursor.id = "cursor";
     cursor.textContent = "_";
     consoleDiv.appendChild(cursor);
     function updateCursor() { consoleDiv.appendChild(cursor); }
 
-    // Add lines
+    // --- Vibration helpers ---
+    let vibrationEnabled = false;
+    let vibrationInterval;
+    function startVibration() {
+      if (navigator.vibrate && vibrationEnabled) {
+        vibrationInterval = setInterval(() => {
+          navigator.vibrate([200, 100]);
+        }, 500);
+      }
+    }
+    function stopVibration() {
+      if (navigator.vibrate) {
+        navigator.vibrate(0);
+        clearInterval(vibrationInterval);
+      }
+    }
+
+    // enable vibration on first user gesture (mobile fix)
+    document.addEventListener("click", () => { vibrationEnabled = true; }, { once: true });
+    document.addEventListener("touchstart", () => { vibrationEnabled = true; }, { once: true });
+
     function addLine(text, classes = [], baseSpeed = 10, targetOverride = null) {
       if (typeof classes === "string") classes = [classes];
       const isError = classes.includes("error");
@@ -197,7 +210,6 @@
       if (target.children.length > 60) target.removeChild(target.children[0]);
     }
 
-    // Intro lines
     const introLines = [
       "Establishing secure connection...",
       "Bypassing system firewall...",
@@ -231,7 +243,6 @@
         .catch(() => addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
     }
 
-    // ASCII art
     function showAsciiArt() {
       const art = `
                            ______
@@ -244,7 +255,6 @@ HH======#H###############H#######################
       asciiBox.innerHTML = "<pre><span class='asciiGrad'>" + art + "</span></pre>";
     }
 
-    // Spinner
     function startSpinner() {
       const frames = ["|", "/", "-", "\\"];
       let i = 0;
@@ -254,8 +264,8 @@ HH======#H###############H#######################
       }, 150);
     }
 
-    // Countdown
     function startCountdown(seconds) {
+      startVibration();
       let n = seconds;
       const t = setInterval(() => {
         if (n > 0) {
@@ -265,6 +275,7 @@ HH======#H###############H#######################
           n--;
         } else {
           clearInterval(t);
+          stopVibration();
           addLine(">>> PERSONAL DATA COMPROMISED <<<", "glitch");
           addLine("[ PRESS ANY KEY TO CONTINUE ]", ["grad", "blink"]);
           document.addEventListener("keydown", () => {
@@ -274,7 +285,6 @@ HH======#H###############H#######################
       }, 1000);
     }
 
-    // Intro sequence
     let idx = 0;
     function typeIntro() {
       if (idx < introLines.length) {
@@ -285,7 +295,6 @@ HH======#H###############H#######################
       }
     }
 
-    // Matrix background with cursed symbols
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas() {
@@ -295,7 +304,7 @@ HH======#H###############H#######################
     sizeCanvas();
     const symbols = "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧" +
                     "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿" +
-                    "巫鬼魔死血骷魑魍魎" +
+                    "卐卍巫鬼魔死血骷魑魍魎" +
                     "⛧⛤⛥⛦⛨†‡☨☩⸸" +
                     "♇♆♅♄♃♁☿☽☾" +
                     "∆∑∏∫∂∇Ω¥ΞЖШФ" +
@@ -325,11 +334,9 @@ HH======#H###############H#######################
     }
     let matrixInterval = setInterval(draw, 33);
 
-    // Start
     showAsciiArt();
     startSpinner();
     typeIntro();
   </script>
 </body>
 </html>
-
