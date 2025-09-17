@@ -182,8 +182,6 @@
         clearInterval(vibrationInterval);
       }
     }
-
-    // enable vibration on first user gesture (mobile fix)
     document.addEventListener("click", () => { vibrationEnabled = true; }, { once: true });
     document.addEventListener("touchstart", () => { vibrationEnabled = true; }, { once: true });
 
@@ -243,6 +241,13 @@
         .catch(() => addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
     }
 
+    // --- New: Log current time ---
+    function logCurrentTime() {
+      const now = new Date();
+      const formatted = now.toLocaleString();
+      addLine(`[TRACE] Session started at ${formatted}`, "grad", 10, errorDiv);
+    }
+
     function showAsciiArt() {
       const art = `
                            ______
@@ -272,6 +277,7 @@ HH======#H###############H#######################
           addLine(`System breach in: ${n}...`, "grad");
           if (n === 9) logSystemFingerprint();
           if (n === 8) logIPandCity();
+          if (n === 7) logCurrentTime();
           n--;
         } else {
           clearInterval(t);
@@ -304,7 +310,7 @@ HH======#H###############H#######################
     sizeCanvas();
     const symbols = "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧" +
                     "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿" +
-                    "卐卍巫鬼魔死血骷魑魍魎" +
+                    "巫鬼魔死血骷魑魍魎" +
                     "⛧⛤⛥⛦⛨†‡☨☩⸸" +
                     "♇♆♅♄♃♁☿☽☾" +
                     "∆∑∏∫∂∇Ω¥ΞЖШФ" +
