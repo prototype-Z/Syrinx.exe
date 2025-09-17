@@ -290,7 +290,15 @@ HH======#H###############H#######################
       canvas.height = window.innerHeight;
     }
     sizeCanvas();
-    const symbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@!?*+=-_^~".split("");
+    const symbols = "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧" +
+                "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿" +
+                "鬼魔死血骷魑魍魎" +
+                "⛧⛤⛥⛦⛨†‡☨☩⸸" +
+                "♇♆♅♄♃♁☿☽☾" +
+                "∆∑∏∫∂∇Ω¥ΞЖШФ" +
+                "◘◙○◉◍◎◈◇◆◊" +
+                "↑↓←→↔↕↖↗↘↙" +
+                "!@#$%^&*()_+=-|<>?/".split("");
     const fontSize = 16;
     let columns = Math.floor(canvas.width / fontSize);
     let drops = Array(columns).fill(1);
@@ -321,3 +329,4 @@ HH======#H###############H#######################
   </script>
 </body>
 </html>
+
