@@ -10,10 +10,10 @@
       background: black;
       font-family: "Courier New", monospace;
       height: 100%;
-      overflow: hidden;
+      overflow: hidden; /* no page scrollbars */
     }
 
-    /* ======= SINGLE CENTER HUD ======= */
+    /* ======= SINGLE CENTER HUD (console) ======= */
     #hud {
       position: fixed;
       left: 50%;
@@ -27,8 +27,8 @@
       border-radius: 12px;
       backdrop-filter: blur(2px);
       z-index: 4;
-      overflow-y: auto;
-      overflow-x: hidden;
+      overflow-y: auto;   /* vertical scroll inside box */
+      overflow-x: hidden; /* prevent horizontal scroll */
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
@@ -38,7 +38,7 @@
       color: #00ff00;
       font-size: 14px;
       line-height: 1.4;
-      white-space: pre;
+      white-space: pre; /* keep the terminal look */
       text-shadow: 0 0 6px rgba(0,0,0,0.8);
       flex: 1;
     }
@@ -63,10 +63,10 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: fingerprintShift 3s ease infinite;
     }
-    @keyframes fingerprintShift { 
-      0%{background-position:0% 50%} 
-      50%{background-position:100% 50%} 
-      100%{background-position:0% 50%} 
+    @keyframes fingerprintShift {
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
     }
 
     .ispLog {
@@ -76,10 +76,10 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: ispShift 4s ease infinite;
     }
-    @keyframes ispShift { 
-      0%{background-position:0% 50%} 
-      50%{background-position:100% 50%} 
-      100%{background-position:0% 50%} 
+    @keyframes ispShift {
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
     }
 
     #spinner {
@@ -121,22 +121,22 @@
     logDiv.appendChild(cursor);
     function updateCursor(){ logDiv.appendChild(cursor); }
 
-    // vibration
+    // vibration (mobile needs a user gesture; this enables after first tap)
     let vibrationEnabled=false, vibrationInterval;
     function startVibration(){ if(navigator.vibrate && vibrationEnabled){ vibrationInterval=setInterval(()=>navigator.vibrate([200,100]),500);} }
     function stopVibration(){ if(navigator.vibrate){ navigator.vibrate(0); clearInterval(vibrationInterval);} }
     addEventListener("click", ()=>{vibrationEnabled=true;},{once:true});
     addEventListener("touchstart", ()=>{vibrationEnabled=true;},{once:true});
 
-    // log text
+    // log text with typewriter effect
     function addLine(text, classes=[], baseSpeed=10){
       if(typeof classes==="string") classes=[classes];
       const line=document.createElement("div");
       line.className=classes.join(" ");
       let i=0;
-      (function type(){ if(i<text.length){ line.textContent+=text.charAt(i++); setTimeout(type, baseSpeed+Math.random()*15);} else updateCursor(); })();
+      (function type(){ if(i<text.length){ line.textContent+=text.charAt(i++); setTimeout(type, baseSpeed+Math.random()*15);} else { updateCursor(); logDiv.scrollTop = logDiv.scrollHeight; } })();
       logDiv.insertBefore(line,cursor);
-      if(logDiv.children.length>120) logDiv.removeChild(logDiv.children[0]);
+      if(logDiv.children.length>160) logDiv.removeChild(logDiv.children[0]);
     }
 
     const introLines=[
@@ -150,11 +150,66 @@
       "⚠ WARNING: Credentials leak detected..."
     ];
 
+    // Basic fingerprint (safe length)
     function logSystemFingerprint(){
-      const lang=navigator.language, platform=navigator.platform, res=`${screen.width}x${screen.height}`;
+      const lang=navigator.language;
+      const platform=navigator.platform;
+      const res=`${screen.width}x${screen.height}`;
       addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10);
+    }
+
+    // Extended fingerprint (avoids horizontal overflow; GPU truncated)
+    function logMoreFingerprint(){
+      const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "N/A");
+      const dpr = (window.devicePixelRatio || 1);
+      const colorDepth = screen.colorDepth;
+      const availRes = `${screen.availWidth}x${screen.availHeight}`;
+      const viewport = `${window.innerWidth}x${window.innerHeight}`;
+      const cores = navigator.hardwareConcurrency || "N/A";
+      const memory = navigator.deviceMemory ? `${navigator.deviceMemory}GB` : "N/A";
+      const touch = (navigator.maxTouchPoints>0) ? `${navigator.maxTouchPoints}-point` : "none";
+      const langList = (navigator.languages || [navigator.language]).join(", ");
+      const dnt = (navigator.doNotTrack=="1" || window.doNotTrack=="1" || navigator.msDoNotTrack=="1") ? "enabled" : "disabled";
+      const online = navigator.onLine ? "online" : "offline";
+      const cookies = navigator.cookieEnabled ? "enabled" : "disabled";
+
+      addLine(`[FINGERPRINT] Timezone: ${tz}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Viewport: ${viewport}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Screen avail: ${availRes} @ ${colorDepth}-bit`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Pixel ratio: ${dpr}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] CPU cores: ${cores}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] RAM (approx): ${memory}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Touch: ${touch}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Languages: ${langList}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Do Not Track: ${dnt}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Cookies: ${cookies} • Network: ${online}`, "fingerprintLog", 10);
+
+      // GPU info (truncated to avoid long lines)
+      try {
+        const c = document.createElement("canvas");
+        const gl = c.getContext("webgl") || c.getContext("experimental-webgl");
+        if (gl) {
+          const ext = gl.getExtension("WEBGL_debug_renderer_info");
+          if (ext) {
+            const vendor = gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) || "";
+            const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || "";
+            let info = `${vendor} ${renderer}`.trim();
+            if (info.length > 60) info = info.slice(0,57) + "…";
+            if (info) addLine(`[FINGERPRINT] GPU: ${info}`, "fingerprintLog", 10);
+          }
+        }
+      } catch(e) {}
+
+      // Media device counts (no permissions needed for counts)
+      if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+        navigator.mediaDevices.enumerateDevices().then(list=>{
+          const cams = list.filter(d=>d.kind==="videoinput").length;
+          const mics = list.filter(d=>d.kind==="audioinput").length;
+          addLine(`[FINGERPRINT] Devices: ${cams} camera(s), ${mics} mic(s)`, "fingerprintLog", 10);
+        }).catch(()=>{ /* ignore */ });
+      }
     }
 
     function logIPandCity(){
@@ -173,10 +228,12 @@
     }
 
     function startSpinner(){
-      const frames=["|","/","-","\\"]; let i=0;
+      const frames=["|","/","-","\\"];
+      let i=0;
       setInterval(()=>{ spinnerEl.textContent="Loading "+frames[i]; i=(i+1)%frames.length; },150);
     }
 
+    // No numeric countdown — only finale after logs finish
     function startCountdown() {
       startVibration();
       setTimeout(() => {
@@ -184,23 +241,25 @@
         addLine(">>> PERSONAL DATA COMPROMISED <<<","glitch");
         addLine("[ PRESS ANY KEY TO CONTINUE ]",["grad","blink"]);
         addEventListener("keydown",()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; },{once:true});
-      }, 2000);
+      }, 1200);
     }
 
+    // Intro typing, then all logs, then finale
     let idx=0;
-    (function typeIntro(){ 
-      if(idx<introLines.length){ 
-        addLine(introLines[idx++],"grad"); 
-        setTimeout(typeIntro,1000);
-      } else { 
+    (function typeIntro(){
+      if(idx<introLines.length){
+        addLine(introLines[idx++], "grad");
+        setTimeout(typeIntro, 900);
+      } else {
         logSystemFingerprint();
         logIPandCity();
         logCurrentTime();
+        logMoreFingerprint();  // <— extra fingerprint lines
         startCountdown();
-      } 
+      }
     })();
 
-    // MATRIX RAIN
+    // MATRIX RAIN (RGB with comet-like trails)
     const canvas=document.getElementById("matrix");
     const ctx=canvas.getContext("2d");
     function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; }
@@ -236,7 +295,6 @@
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
       ctx.font=fontSize+"px Courier New";
-
       for(let i=0;i<columns;i++){
         yPos[i]+=speeds[i];
         if(yPos[i]>=rows+trailLen[i]){
@@ -244,10 +302,8 @@
           speeds[i]=0.8+Math.random()*1.8;
           trailLen[i]=5+Math.floor(Math.random()*7);
         }
-
         const baseX=i*fontSize;
         const headRow=Math.floor(yPos[i]);
-
         for(let t=0;t<trailLen[i];t++){
           const row=headRow-t; if(row<0||row>=rows) continue;
           const y=row*fontSize;
@@ -259,7 +315,6 @@
           ctx.fillText(getSymbol(), baseX, y);
         }
       }
-
       hue=(hue+2)%360;
       requestAnimationFrame(draw);
     }
