@@ -13,35 +13,39 @@
       overflow: hidden;
     }
 
-    /* Consoles: keep layout, remove dark panels */
-    #console, #errorConsole {
+    /* ======= SINGLE CENTER HUD ======= */
+    #hud {
       position: fixed;
-      top: 10px;
-      width: 45vw;
-      height: 90vh;
-      padding: 20px;
-      white-space: pre;
+      left: 50%;
+      top: 8vh;
+      transform: translateX(-50%);
+      width: min(1200px, 86vw);
+      height: 78vh;
+      padding: 18px 22px;
+      background: rgba(0,0,0,0.26);
+      border: 1px solid #a020f0;
+      border-radius: 10px;
+      backdrop-filter: blur(2px);
+      z-index: 4;
+      overflow: hidden;         /* no scrollbars */
+      display: flex;
+      flex-direction: column;
+    }
+
+    #log {
+      color: #00ff00;           /* default log color */
       font-size: 14px;
       line-height: 1.4;
-      text-align: left;
-      background: transparent;            /* ✨ no more dark rectangles */
-      border-radius: 6px;
-      font-family: monospace;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
+      white-space: pre;
+      text-shadow: 0 0 6px rgba(0,0,0,0.8);
       overflow: hidden;
-      z-index: 3;
+      flex: 1;
     }
-    #console { left: 10px; color: #00ff00; }
-    #errorConsole { right: 10px; color: #ff3b3b; }
 
-    /* readability glow so text pops over matrix */
-    #console, #errorConsole { text-shadow: 0 0 6px rgba(0,0,0,0.8); }
-
-    .glitch { color: red; font-weight: bold; display: block; animation: glitch 1s infinite; }
     .error { color: #ff3b3b; font-weight: bold; display: block; }
     .access { color: lime; font-weight: bold; display: block; animation: blink 0.5s steps(1) 6; }
-    .blink { animation: blink 1s steps(1) infinite; display: block; }
+    .blink  { animation: blink 1s steps(1) infinite; display: block; }
+    .glitch { color: red; font-weight: bold; display: block; animation: glitch 1s infinite; }
 
     @keyframes blink { 50% { opacity: 0; } }
     @keyframes glitch {
@@ -55,56 +59,40 @@
     .asciiGrad {
       background: linear-gradient(90deg, #a020f0, #ff66cc, #a020f0);
       background-size: 300% 300%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: asciiShift 4s ease infinite;
     }
-    @keyframes asciiShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+    @keyframes asciiShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
     .fingerprintLog {
       font-weight: bold;
       background: linear-gradient(90deg, crimson, grey, crimson);
       background-size: 300% 300%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: fingerprintShift 3s ease infinite;
     }
-    @keyframes fingerprintShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+    @keyframes fingerprintShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
     .ispLog {
       font-weight: bold;
       background: linear-gradient(90deg, white, black, white);
       background-size: 300% 300%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: ispShift 4s ease infinite;
     }
-    @keyframes ispShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+    @keyframes ispShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
     #asciiBox {
       position: fixed;
-      top: 50%;
+      top: 52%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.28);       /* lighter so it doesn’t read as a big block */
+      background: rgba(0,0,0,0.28);
       border: 1px solid #a020f0;
       font-family: monospace;
       font-size: 14px;
       padding: 10px;
-      display: block;
-      z-index: 4;
+      z-index: 5;
       white-space: pre;
       text-align: center;
       text-shadow: 2px 2px #4b0082, 4px 4px #2e003e;
@@ -121,7 +109,7 @@
       transform: translateX(-50%);
       font-weight: bold;
       color: #ff66cc;
-      z-index: 5;
+      z-index: 6;
       text-shadow: 0 0 6px rgba(0,0,0,0.8);
     }
 
@@ -137,72 +125,54 @@
       transform-origin: center top;
     }
     @media (max-width: 800px) {
-      canvas {
-        transform: perspective(800px) rotateX(8deg) rotateY(-5deg) translateY(-1vh);
-      }
-    }
-
-    .pentagram {
-      position: fixed;
-      font-size: 24px;
-      font-family: monospace;
-      z-index: 4;
-      opacity: 0.9;
-      animation: fadeOut 1.5s ease forwards;
-      pointer-events: none;
-      text-shadow: 0 0 8px currentColor, 0 0 15px currentColor;
-    }
-    @keyframes fadeOut {
-      0% { opacity: 1; transform: scale(1) rotate(0deg); }
-      50% { opacity: 0.8; transform: scale(1.3) rotate(20deg); }
-      100% { opacity: 0; transform: scale(0.7) rotate(-20deg); }
+      #hud { top: 6vh; width: 92vw; height: 76vh; }
+      canvas { transform: perspective(800px) rotateX(8deg) rotateY(-5deg) translateY(-1vh); }
     }
   </style>
 </head>
 <body>
   <canvas id="matrix"></canvas>
-  <div id="console"></div>
-  <div id="errorConsole"></div>
+
+  <!-- Single Centered HUD -->
+  <div id="hud">
+    <div id="log"></div>
+  </div>
+
   <div id="asciiBox"></div>
   <div id="spinner"></div>
 
   <script>
-    const consoleDiv = document.getElementById("console");
-    const errorDiv = document.getElementById("errorConsole");
+    const logDiv = document.getElementById("log");
     const asciiBox = document.getElementById("asciiBox");
     const spinnerEl = document.getElementById("spinner");
 
+    // cursor for typing effect
     const cursor = document.createElement("span");
     cursor.id = "cursor";
     cursor.textContent = "_";
-    consoleDiv.appendChild(cursor);
-    function updateCursor() { consoleDiv.appendChild(cursor); }
+    logDiv.appendChild(cursor);
+    function updateCursor() { logDiv.appendChild(cursor); }
 
     // Vibration (unlocks on first gesture)
     let vibrationEnabled = false, vibrationInterval;
-    function startVibration() {
-      if (navigator.vibrate && vibrationEnabled) {
-        vibrationInterval = setInterval(() => navigator.vibrate([200, 100]), 500);
-      }
-    }
-    function stopVibration() { if (navigator.vibrate){ navigator.vibrate(0); clearInterval(vibrationInterval); } }
-    document.addEventListener("click", () => { vibrationEnabled = true; }, { once: true });
-    document.addEventListener("touchstart", () => { vibrationEnabled = true; }, { once: true });
+    function startVibration(){ if(navigator.vibrate && vibrationEnabled){ vibrationInterval=setInterval(()=>navigator.vibrate([200,100]),500);} }
+    function stopVibration(){ if(navigator.vibrate){ navigator.vibrate(0); clearInterval(vibrationInterval);} }
+    document.addEventListener("click", ()=>{vibrationEnabled=true;},{once:true});
+    document.addEventListener("touchstart", ()=>{vibrationEnabled=true;},{once:true});
 
-    function addLine(text, classes = [], baseSpeed = 10, targetOverride = null) {
+    // unified logger (errors just add .error class)
+    function addLine(text, classes = [], baseSpeed = 10) {
       if (typeof classes === "string") classes = [classes];
-      const isError = classes.includes("error");
-      const target = targetOverride || (isError ? errorDiv : consoleDiv);
       const line = document.createElement("div");
       line.className = classes.join(" ");
       let i = 0;
-      function typeChar() {
-        if (i < text.length) { line.textContent += text.charAt(i++); setTimeout(typeChar, baseSpeed + Math.random() * 15); }
-        else if (!isError && !targetOverride) updateCursor();
+      function typeChar(){
+        if(i < text.length){ line.textContent += text.charAt(i++); setTimeout(typeChar, baseSpeed + Math.random()*15); }
+        else updateCursor();
       }
-      target.insertBefore(line, (!isError && !targetOverride) ? cursor : null);
+      logDiv.insertBefore(line, cursor);
       typeChar();
-      if (target.children.length > 60) target.removeChild(target.children[0]);
+      if (logDiv.children.length > 120) logDiv.removeChild(logDiv.children[0]);
     }
 
     const introLines = [
@@ -221,26 +191,26 @@
       const lang = navigator.language;
       const platform = navigator.platform;
       const res = `${screen.width}x${screen.height}`;
-      addLine(`[FINGERPRINT] User-Agent: ${ua}`, "fingerprintLog", 10, errorDiv);
-      addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10, errorDiv);
-      addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10, errorDiv);
-      addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10, errorDiv);
+      addLine(`[FINGERPRINT] User-Agent: ${ua}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10);
     }
 
     function logIPandCity() {
       fetch("https://ipapi.co/json/")
         .then(res => res.json())
         .then(data => {
-          addLine(`[NET] Public IP: ${data.ip}`, "grad", 10, errorDiv);
-          addLine(`[TRACE] Location: ${data.city}, ${data.region}, ${data.country_name}`, "grad", 10, errorDiv);
-          addLine(`[NET] ISP: ${data.org}`, "ispLog", 10, errorDiv);
+          addLine(`[NET] Public IP: ${data.ip}`, "grad", 10);
+          addLine(`[TRACE] Location: ${data.city}, ${data.region}, ${data.country_name}`, "grad", 10);
+          addLine(`[NET] ISP: ${data.org}`, "ispLog", 10);
         })
         .catch(() => addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
     }
 
     function logCurrentTime() {
       const now = new Date();
-      addLine(`[TRACE] Session started at ${now.toLocaleString()}`, "grad", 10, errorDiv);
+      addLine(`[TRACE] Session started at ${now.toLocaleString()}`, "grad", 10);
     }
 
     function showAsciiArt() {
@@ -324,13 +294,9 @@ HH======#H###############H#######################
     function draw(){
       frame++;
 
-      /* normal fade + periodic deeper fade to prevent build-up */
       ctx.fillStyle = "rgba(0,0,0,0.12)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
-      if (frame % 120 === 0) {
-        ctx.fillStyle = "rgba(0,0,0,0.35)";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-      }
+      if (frame % 120 === 0) { ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(0,0,canvas.width,canvas.height); }
 
       ctx.font = fontSize + "px Courier New";
 
