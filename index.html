@@ -19,12 +19,9 @@
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      width: min(1100px, calc(100vw - 48px));
-      height: min(78vh, calc(100vh - 48px));
-      padding: calc(18px + env(safe-area-inset-top, 0)) 
-               calc(22px + env(safe-area-inset-right, 0))
-               calc(18px + env(safe-area-inset-bottom, 0)) 
-               calc(22px + env(safe-area-inset-left, 0));
+      width: min(1100px, calc(100vw - 80px));   /* ✅ more breathing room */
+      height: min(78vh, calc(100vh - 80px));    /* ✅ not clipped at edges */
+      padding: 20px;
       background: rgba(0,0,0,0.26);
       border: 1px solid #a020f0;
       border-radius: 12px;
@@ -88,7 +85,7 @@
 
     #asciiBox {
       position: fixed;
-      top: 52%;
+      top: 58%;  /* ✅ slightly lower so it doesn’t overlap log */
       left: 50%;
       transform: translate(-50%, -50%);
       background: rgba(0,0,0,0.28);
@@ -239,7 +236,7 @@ HH======#H###############H#######################
     let idx=0;
     (function typeIntro(){ if(idx<introLines.length){ addLine(introLines[idx++],"grad"); setTimeout(typeIntro,1000);} else { startCountdown(10);} })();
 
-    // MATRIX RAIN (with comet trails, hybrid clear, no bands)
+    // MATRIX RAIN (with comet trails, hybrid clear)
     const canvas=document.getElementById("matrix");
     const ctx=canvas.getContext("2d");
     function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; }
@@ -256,7 +253,7 @@ HH======#H###############H#######################
                   "!@#$%^&*()_+=-|<>?/".split("");
 
     const fontSize=16;
-    let columns,rows,yPos,speeds,trailLen,frame=0;
+    let columns,rows,yPos,speeds,trailLen;
     function initColumns(){
       columns=Math.floor(canvas.width/fontSize);
       rows=Math.ceil(canvas.height/fontSize);
@@ -270,9 +267,6 @@ HH======#H###############H#######################
     let hue=0;
 
     function draw(){
-      frame++;
-
-      // Hybrid clear (fixes dark bands)
       ctx.clearRect(0,0,canvas.width,canvas.height);
       ctx.fillStyle="rgba(0,0,0,0.2)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
