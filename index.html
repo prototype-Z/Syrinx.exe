@@ -22,7 +22,7 @@
       width: min(1100px, calc(100vw - 48px));
       height: min(78vh, calc(100vh - 48px));
       padding: 18px 22px;
-      background: rgba(0,0,0,0.26);
+      background: rgba(0,0,0,0.32); /* slightly darker */
       border: 1px solid #a020f0;
       border-radius: 12px;
       backdrop-filter: blur(2px);
@@ -44,9 +44,7 @@
       background: #a020f0;  /* violet */
       border-radius: 6px;
     }
-    #hud::-webkit-scrollbar-thumb:hover {
-      background: #b84dff;
-    }
+    #hud::-webkit-scrollbar-thumb:hover { background: #b84dff; }
     /* Firefox */
     #hud { scrollbar-width: thin; scrollbar-color: #a020f0 rgba(0,0,0,0.4); }
 
@@ -54,7 +52,7 @@
       color: #00ff00;
       font-size: 14px;
       line-height: 1.4;
-      white-space: pre; /* keep the terminal look */
+      white-space: pre;
       text-shadow: 0 0 6px rgba(0,0,0,0.8);
       flex: 1;
     }
@@ -118,10 +116,23 @@
       z-index: 1;
       background: black;
     }
+
+    /* Bottom fade overlay (sits above canvas, below HUD) */
+    #fade {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: linear-gradient(to bottom,
+        rgba(0,0,0,0) 60%,
+        rgba(0,0,0,0.35) 80%,
+        rgba(0,0,0,0.65) 100%);
+    }
   </style>
 </head>
 <body>
   <canvas id="matrix"></canvas>
+  <div id="fade"></div>
 
   <div id="hud"><div id="log"></div></div>
   <div id="spinner"></div>
@@ -157,10 +168,10 @@
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(100, t);           // kick-ish
+      osc.frequency.setValueAtTime(100, t);
       gain.gain.setValueAtTime(0.0001, t);
       gain.gain.exponentialRampToValueAtTime(0.5, t+0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t+0.18); // quick thump
+      gain.gain.exponentialRampToValueAtTime(0.0001, t+0.18);
       osc.connect(gain).connect(audioCtx.destination);
       osc.start(t);
       osc.stop(t+0.2);
@@ -170,18 +181,15 @@
       if (beatTimer) return;
       playHeartbeat();
       beatTimer = setInterval(playHeartbeat, beatIntervalMs);
-      // Gradually speed up a bit over time (down to ~750ms)
       const accel = setInterval(()=>{
         beatIntervalMs = Math.max(750, beatIntervalMs - 10);
         if (beatTimer) { clearInterval(beatTimer); beatTimer = setInterval(playHeartbeat, beatIntervalMs); }
       }, 3000);
-      // store to clear together later if needed
       beatTimer._accel = accel;
     }
 
     function spikeHeartbeatThenCalm(){
       if (!audioCtx) return;
-      // spike to ~120 BPM for a few seconds
       if (beatTimer) { clearInterval(beatTimer); }
       beatIntervalMs = 500;
       beatTimer = setInterval(playHeartbeat, beatIntervalMs);
@@ -192,7 +200,6 @@
       }, 4000);
     }
 
-    // Enable audio + vibration on first user gesture
     addEventListener("click", ()=>{ vibrationEnabled=true; initAudio(); }, {once:true});
     addEventListener("touchstart", ()=>{ vibrationEnabled=true; initAudio(); }, {once:true});
 
@@ -244,11 +251,7 @@
       if (platform) return platform;
       return "Administrator";
     }
-
-    function logProfile(){
-      const name = getProfileName();
-      addLine(`[PROFILE] Registered Name: ${name}`, "fingerprintLog", 10);
-    }
+    function logProfile(){ addLine(`[PROFILE] Registered Name: ${getProfileName()}`, "fingerprintLog", 10); }
 
     // Fingerprint basics
     function logSystemFingerprint(){
@@ -260,7 +263,7 @@
       addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10);
     }
 
-    // Extended fingerprint
+    // Extended fingerprint (short/clean)
     function logMoreFingerprint(){
       const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "N/A");
       const dpr = (window.devicePixelRatio || 1);
@@ -286,7 +289,6 @@
       addLine(`[FINGERPRINT] Do Not Track: ${dnt}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Cookies: ${cookies} • Network: ${online}`, "fingerprintLog", 10);
 
-      // GPU info (truncated)
       try {
         const c = document.createElement("canvas");
         const gl = c.getContext("webgl") || c.getContext("experimental-webgl");
@@ -302,13 +304,12 @@
         }
       } catch(e) {}
 
-      // Media device counts
       if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
         navigator.mediaDevices.enumerateDevices().then(list=>{
           const cams = list.filter(d=>d.kind==="videoinput").length;
           const mics = list.filter(d=>d.kind==="audioinput").length;
           addLine(`[FINGERPRINT] Devices: ${cams} camera(s), ${mics} mic(s)`, "fingerprintLog", 10);
-        }).catch(()=>{ /* ignore */ });
+        }).catch(()=>{});
       }
     }
 
@@ -325,9 +326,7 @@
     }
 
     // time
-    function logCurrentTime(){
-      addLine(`[TRACE] Session started at ${new Date().toLocaleString()}`, "grad", 10);
-    }
+    function logCurrentTime(){ addLine(`[TRACE] Session started at ${new Date().toLocaleString()}`, "grad", 10); }
 
     // spinner
     function startSpinner(){
@@ -364,7 +363,7 @@
       }
     })();
 
-    // ===== MATRIX RAIN (Glow → Fade with White Pulse) =====
+    // ===== MATRIX RAIN (darker + bottom fade + white pulse) =====
     const canvas=document.getElementById("matrix");
     const ctx=canvas.getContext("2d");
     function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; }
@@ -401,8 +400,8 @@
     setInterval(()=>{ pulseUntil = performance.now() + 1200; }, 30000);
 
     function draw(){
-      // lighter overlay so trails persist but stay sharp
-      ctx.fillStyle="rgba(0,0,0,0.05)";
+      /* darker overlay -> overall darker look */
+      ctx.fillStyle="rgba(0,0,0,0.12)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
       ctx.font=fontSize+"px Courier New";
@@ -412,7 +411,7 @@
 
       // Pulse glow
       glowPhase = (glowPhase + 0.08) % (Math.PI * 2);
-      const glowPulse = 1 + Math.sin(glowPhase) * 0.6; // 0.4..1.6
+      const glowPulse = 1 + Math.sin(glowPhase) * 0.6;
 
       for(let i=0;i<columns;i++){
         yPos[i]+=speeds[i];
@@ -429,17 +428,14 @@
           const row=headRow-t; if(row<0||row>=rows) continue;
           const y=row*fontSize;
 
-          // Tail alpha fades; head strongest
-          const alpha = Math.max(0.06, 1 - t/trailLen[i]);
-          const light = t===0 ? 82 : 58;
-          const blur  = t===0 ? 10 * glowPulse : 2;
+          const alpha = Math.max(0.05, 1 - t/trailLen[i]);
+          const light = t===0 ? 70 : 46;        /* dimmer head & tail */
+          const blur  = t===0 ? 8 * glowPulse : 1.5;
 
           if (pulsing) {
-            // Flash to bright white during pulse
-            ctx.fillStyle = `hsla(0, 0%, 100%, ${alpha})`;
+            ctx.fillStyle = `hsla(0, 0%, 90%, ${alpha})`; /* softer white */
           } else {
-            // Normal RGB rainbow
-            ctx.fillStyle=`hsla(${(hue+i*15)%360}, 100%, ${light}%, ${alpha})`;
+            ctx.fillStyle=`hsla(${(hue+i*15)%360}, 90%, ${light}%, ${alpha})`;
           }
           ctx.shadowColor=ctx.fillStyle;
           ctx.shadowBlur=blur;
@@ -447,7 +443,7 @@
         }
       }
 
-      if (!pulsing) hue=(hue+2)%360; // hold hue during pulse, resume after
+      if (!pulsing) hue=(hue+2)%360;
       requestAnimationFrame(draw);
     }
     requestAnimationFrame(draw);
