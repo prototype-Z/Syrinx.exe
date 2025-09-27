@@ -287,7 +287,7 @@ HH======#H###############H#######################
       else { startCountdown(10); }
     }
 
-    // ======== MATRIX RAIN (fixed bright pillar) ========
+    // ======== MATRIX RAIN (band-resistant) ========
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas(){ canvas.width = innerWidth; canvas.height = innerHeight; }
@@ -305,14 +305,14 @@ HH======#H###############H#######################
                     .split("");
 
     const fontSize = 16;
-    let columns, rows, yPos, speeds, trailLen;
+    let columns, rows, yPos, speeds, trailLen, frame=0;
 
     function initColumns(){
       columns = Math.floor(canvas.width / fontSize);
       rows = Math.ceil(canvas.height / fontSize);
       yPos = new Array(columns).fill(0).map(()=> Math.random() * rows);
-      speeds = new Array(columns).fill(0).map(()=> 0.8 + Math.random()*1.8);      // moderate, varied
-      trailLen = new Array(columns).fill(0).map(()=> 5 + Math.floor(Math.random()*8)); // 5–12
+      speeds = new Array(columns).fill(0).map(()=> 0.8 + Math.random()*1.8);       // varied speeds
+      trailLen = new Array(columns).fill(0).map(()=> 5 + Math.floor(Math.random()*7)); // 5–11 (shorter)
     }
     initColumns();
 
@@ -320,22 +320,34 @@ HH======#H###############H#######################
 
     let hue = 0;
     function draw(){
-      // translucent clear so trails persist a bit
+      frame++;
+
+      // Normal fade
       ctx.fillStyle = "rgba(0,0,0,0.12)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      // Periodic deeper fade to erase build-up (every ~2s @ ~60fps)
+      if (frame % 120 === 0) {
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+      }
+
       ctx.font = fontSize + "px Courier New";
 
       for (let i=0;i<columns;i++){
         yPos[i] += speeds[i];
 
-        // randomize respawn so no column gets stuck & too bright
+        // Random respawn to avoid persistent columns
         if (yPos[i] >= rows + trailLen[i]) {
-          yPos[i] = -Math.random() * rows * 0.5;        // respawn above screen randomly
-          speeds[i] = 0.8 + Math.random()*1.8;          // new speed
-          trailLen[i] = 5 + Math.floor(Math.random()*8);// new tail length
+          yPos[i] = -Math.random() * rows * 0.6;
+          speeds[i] = 0.8 + Math.random()*1.8;
+          trailLen[i] = 5 + Math.floor(Math.random()*7);
         }
 
-        const x = i * fontSize;
+        // --- micro horizontal jitter (breaks paint stacking)
+        const jitter = (Math.sin((frame + i) * 0.6) * 0.25) + (Math.random()*0.2 - 0.1); // ~±0.35px
+        const baseX = i * fontSize + jitter;
+
         const headRow = Math.floor(yPos[i]);
 
         // draw comet head + fading tail
@@ -344,15 +356,15 @@ HH======#H###############H#######################
           if (row < 0 || row >= rows) continue;
 
           const y = row * fontSize;
-          const alpha = Math.max(0, 1 - t / trailLen[i]);         // fade
-          const light = t === 0 ? 68 : 50;                        // softer head brightness
+          const alpha = Math.max(0, 1 - t / trailLen[i]);   // fade along tail
+          const light = t === 0 ? 66 : 48;                  // softer head brightness
           ctx.fillStyle = `hsla(${(hue + i*15) % 360}, 100%, ${light}%, ${alpha})`;
 
-          // glow
+          // glow (lighter to reduce streaking)
           ctx.shadowColor = ctx.fillStyle;
-          ctx.shadowBlur = t === 0 ? 10 : 4;
+          ctx.shadowBlur = t === 0 ? 8 : 3;
 
-          ctx.fillText(getSymbol(), x, y);
+          ctx.fillText(getSymbol(), baseX, y);
         }
       }
 
