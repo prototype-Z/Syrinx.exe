@@ -29,6 +29,7 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
       overflow: hidden;
+      z-index: 3; /* above matrix & scanlines */
     }
 
     #console { left: 10px; color: #00ff00; }
@@ -100,7 +101,7 @@
       font-size: 14px;
       padding: 10px;
       display: block;
-      z-index: 2;
+      z-index: 4; /* above consoles */
       white-space: pre;
       text-align: center;
       text-shadow: 2px 2px #4b0082, 4px 4px #2e003e;
@@ -117,7 +118,43 @@
       transform: translateX(-50%);
       font-weight: bold;
       color: #ff66cc;
-      z-index: 5;
+      z-index: 5; /* topmost text */
+    }
+
+    /* NEW: rainbow + glitchy scanlines BEHIND the matrix rain */
+    #scanlines {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 0; /* under matrix canvas */
+      background-image: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.22) 0px,
+        rgba(255,255,255,0.22) 2px,  /* line thickness */
+        transparent 2px,
+        transparent 6px              /* gap */
+      );
+      /* make rainbow & glitchy */
+      filter: hue-rotate(0deg) saturate(160%);
+      animation:
+        hueShift 6s linear infinite,
+        scanFlicker 0.25s linear infinite,
+        scanJitter 1.6s steps(2, end) infinite;
+      opacity: 0.9;
+    }
+    @keyframes hueShift {
+      from { filter: hue-rotate(0deg) saturate(160%); }
+      to   { filter: hue-rotate(360deg) saturate(160%); }
+    }
+    @keyframes scanFlicker {
+      0%, 100% { opacity: 0.88; }
+      50%      { opacity: 0.95; }
+    }
+    @keyframes scanJitter {
+      0%   { transform: translateY(0px); }
+      50%  { transform: translateY(-0.5px); }
+      100% { transform: translateY(0.5px); }
     }
 
     canvas {
@@ -125,7 +162,7 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      z-index: 0;
+      z-index: 1; /* ABOVE scanlines, BELOW consoles */
       background: black;
     }
 
@@ -133,7 +170,7 @@
       position: fixed;
       font-size: 24px;
       font-family: monospace;
-      z-index: 3;
+      z-index: 4;
       opacity: 0.9;
       animation: fadeOut 1.5s ease forwards;
       pointer-events: none;
@@ -145,48 +182,17 @@
       50% { opacity: 0.8; transform: scale(1.3) rotate(20deg); }
       100% { opacity: 0; transform: scale(0.7) rotate(-20deg); }
     }
-
-    /* CRT Scanlines Overlay (bold violet, visible) */
-    .crt {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      pointer-events: none;
-      z-index: 2147483647;
-      background-image: repeating-linear-gradient(
-        to bottom,
-        rgba(186, 85, 211, 0.45) 0px,
-        rgba(186, 85, 211, 0.45) 3px,
-        transparent 3px,
-        transparent 7px
-      );
-      opacity: 0.95;
-      animation: crtFlicker 0.35s infinite;
-      will-change: opacity, transform;
-      transform: translateZ(0);
-    }
-    .crt::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      box-shadow:
-        inset 0 0 120px rgba(186, 85, 211, 0.18),
-        inset 0 0 260px rgba(0, 0, 0, 0.65);
-      border-radius: 1px;
-    }
-    @keyframes crtFlicker {
-      0%, 100% { opacity: 0.92; }
-      50% { opacity: 0.98; }
-    }
   </style>
 </head>
 <body>
+  <!-- scanlines go UNDER the matrix -->
+  <div id="scanlines"></div>
+
   <canvas id="matrix"></canvas>
   <div id="console"></div>
   <div id="errorConsole"></div>
   <div id="asciiBox"></div>
   <div id="spinner"></div>
-  <div class="crt"></div> <!-- 🔥 scanline overlay -->
 
   <script>
     const consoleDiv = document.getElementById("console");
@@ -200,22 +206,14 @@
     consoleDiv.appendChild(cursor);
     function updateCursor() { consoleDiv.appendChild(cursor); }
 
-    // --- Vibration helpers ---
-    let vibrationEnabled = false;
-    let vibrationInterval;
+    // Vibration (unlocks on first gesture)
+    let vibrationEnabled = false, vibrationInterval;
     function startVibration() {
       if (navigator.vibrate && vibrationEnabled) {
-        vibrationInterval = setInterval(() => {
-          navigator.vibrate([200, 100]);
-        }, 500);
+        vibrationInterval = setInterval(() => navigator.vibrate([200, 100]), 500);
       }
     }
-    function stopVibration() {
-      if (navigator.vibrate) {
-        navigator.vibrate(0);
-        clearInterval(vibrationInterval);
-      }
-    }
+    function stopVibration() { if (navigator.vibrate){ navigator.vibrate(0); clearInterval(vibrationInterval); } }
     document.addEventListener("click", () => { vibrationEnabled = true; }, { once: true });
     document.addEventListener("touchstart", () => { vibrationEnabled = true; }, { once: true });
 
@@ -223,22 +221,15 @@
       if (typeof classes === "string") classes = [classes];
       const isError = classes.includes("error");
       const target = targetOverride || (isError ? errorDiv : consoleDiv);
-
       const line = document.createElement("div");
       line.className = classes.join(" ");
       let i = 0;
       function typeChar() {
-        if (i < text.length) {
-          line.textContent += text.charAt(i);
-          i++;
-          setTimeout(typeChar, baseSpeed + Math.random() * 15);
-        } else if (!isError && !targetOverride) {
-          updateCursor();
-        }
+        if (i < text.length) { line.textContent += text.charAt(i++); setTimeout(typeChar, baseSpeed + Math.random() * 15); }
+        else if (!isError && !targetOverride) updateCursor();
       }
       target.insertBefore(line, (!isError && !targetOverride) ? cursor : null);
       typeChar();
-
       if (target.children.length > 60) target.removeChild(target.children[0]);
     }
 
@@ -277,8 +268,7 @@
 
     function logCurrentTime() {
       const now = new Date();
-      const formatted = now.toLocaleString();
-      addLine(`[TRACE] Session started at ${formatted}`, "grad", 10, errorDiv);
+      addLine(`[TRACE] Session started at ${now.toLocaleString()}`, "grad", 10, errorDiv);
     }
 
     function showAsciiArt() {
@@ -296,10 +286,7 @@ HH======#H###############H#######################
     function startSpinner() {
       const frames = ["|", "/", "-", "\\"];
       let i = 0;
-      setInterval(() => {
-        spinnerEl.textContent = "Loading " + frames[i];
-        i = (i + 1) % frames.length;
-      }, 150);
+      setInterval(() => { spinnerEl.textContent = "Loading " + frames[i]; i = (i + 1) % frames.length; }, 150);
     }
 
     function startCountdown(seconds) {
@@ -326,46 +313,40 @@ HH======#H###############H#######################
 
     let idx = 0;
     function typeIntro() {
-      if (idx < introLines.length) {
-        addLine(introLines[idx++], "grad");
-        setTimeout(typeIntro, 1000);
-      } else {
-        startCountdown(10);
-      }
+      if (idx < introLines.length) { addLine(introLines[idx++], "grad"); setTimeout(typeIntro, 1000); }
+      else { startCountdown(10); }
     }
 
+    // Matrix background with cursed symbols (canvas uses translucent clear → scanlines show through)
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
-    function sizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
+    function sizeCanvas(){ canvas.width = innerWidth; canvas.height = innerHeight; }
     sizeCanvas();
-    const symbols = "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧" +
-                    "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿" +
-                    "巫鬼魔死血骷魑魍魎" +
-                    "⛧⛤⛥⛦⛨†‡☨☩⸸" +
-                    "♇♆♅♄♃♁☿☽☾" +
-                    "∆∑∏∫∂∇Ω¥ΞЖШФ" +
-                    "◘◙○◉◍◎◈◇◆◊" +
-                    "↑↓←→↔↕↖↗↘↙" +
+    const symbols = "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧"+
+                    "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿"+
+                    "巫鬼魔死血骷魑魍魎"+
+                    "⛧⛤⛥⛦⛨†‡☨☩⸸"+
+                    "♇♆♅♄♃♁☿☽☾"+
+                    "∆∑∏∫∂∇Ω¥ΞЖШФ"+
+                    "◘◙○◉◍◎◈◇◆◊"+
+                    "↑↓←→↔↕↖↗↘↙"+
                     "!@#$%^&*()_+=-|<>?/"
                     .split("");
     const fontSize = 16;
     let columns = Math.floor(canvas.width / fontSize);
     let drops = Array(columns).fill(1);
     let hue = 0;
-    function getRandomSymbol() { return symbols[Math.floor(Math.random() * symbols.length)]; }
-    function draw() {
-      ctx.fillStyle = "rgba(0,0,0,0.1)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    function getRandomSymbol(){ return symbols[Math.floor(Math.random()*symbols.length)]; }
+    function draw(){
+      ctx.fillStyle = "rgba(0,0,0,0.10)"; /* translucent clear so scanlines are visible behind */
+      ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.font = fontSize + "px Courier New";
-      for (let i = 0; i < drops.length; i++) {
+      for (let i=0;i<drops.length;i++){
         const text = getRandomSymbol();
         const x = i * fontSize;
         const y = drops[i] * fontSize;
         const alpha = 1 - Math.min(1, y / canvas.height);
-        ctx.fillStyle = `hsla(${(hue + i * 15) % 360}, 100%, 50%, ${alpha})`;
+        ctx.fillStyle = `hsla(${(hue + i*15) % 360}, 100%, 50%, ${alpha})`;
         ctx.fillText(text, x, y);
         if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i]++;
@@ -373,7 +354,9 @@ HH======#H###############H#######################
       hue = (hue + 2) % 360;
     }
     let matrixInterval = setInterval(draw, 33);
+    addEventListener("resize", () => { sizeCanvas(); columns = Math.floor(canvas.width / fontSize); drops = Array(columns).fill(1); });
 
+    // Start
     showAsciiArt();
     startSpinner();
     typeIntro();
