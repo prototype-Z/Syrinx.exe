@@ -34,6 +34,22 @@
       box-sizing: border-box;
     }
 
+    /* ===== Scrollbar Styling (purple) ===== */
+    #hud::-webkit-scrollbar { width: 10px; }
+    #hud::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.4);
+      border-radius: 6px;
+    }
+    #hud::-webkit-scrollbar-thumb {
+      background: #a020f0;  /* violet */
+      border-radius: 6px;
+    }
+    #hud::-webkit-scrollbar-thumb:hover {
+      background: #b84dff;
+    }
+    /* Firefox */
+    #hud { scrollbar-width: thin; scrollbar-color: #a020f0 rgba(0,0,0,0.4); }
+
     #log {
       color: #00ff00;
       font-size: 14px;
@@ -49,8 +65,8 @@
 
     @keyframes blink { 50% { opacity: 0; } }
     @keyframes glitch {
-      0% { text-shadow: 2px 0 red; }
-      50% { text-shadow: -2px 0 purple; }
+      0%   { text-shadow: 2px 0 red; }
+      50%  { text-shadow: -2px 0 purple; }
       100% { text-shadow: 2px 0 red; }
     }
 
@@ -121,14 +137,66 @@
     logDiv.appendChild(cursor);
     function updateCursor(){ logDiv.appendChild(cursor); }
 
-    // vibration (mobile needs a user gesture; this enables after first tap)
+    // ===== Heartbeat audio (starts after first tap/click) =====
     let vibrationEnabled=false, vibrationInterval;
+    let audioCtx = null, beatTimer = null, beatIntervalMs = 1000; // ~60 BPM
     function startVibration(){ if(navigator.vibrate && vibrationEnabled){ vibrationInterval=setInterval(()=>navigator.vibrate([200,100]),500);} }
     function stopVibration(){ if(navigator.vibrate){ navigator.vibrate(0); clearInterval(vibrationInterval);} }
-    addEventListener("click", ()=>{vibrationEnabled=true;},{once:true});
-    addEventListener("touchstart", ()=>{vibrationEnabled=true;},{once:true});
 
-    // log text with typewriter effect
+    function initAudio(){
+      if (audioCtx) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        startHeartbeat();
+      } catch(e){}
+    }
+
+    function playHeartbeat(){
+      if (!audioCtx) return;
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(100, t);           // kick-ish
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.5, t+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t+0.18); // quick thump
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t+0.2);
+    }
+
+    function startHeartbeat(){
+      if (beatTimer) return;
+      playHeartbeat();
+      beatTimer = setInterval(playHeartbeat, beatIntervalMs);
+      // Gradually speed up a bit over time (down to ~750ms)
+      const accel = setInterval(()=>{
+        beatIntervalMs = Math.max(750, beatIntervalMs - 10);
+        if (beatTimer) { clearInterval(beatTimer); beatTimer = setInterval(playHeartbeat, beatIntervalMs); }
+      }, 3000);
+      // store to clear together later if needed
+      beatTimer._accel = accel;
+    }
+
+    function spikeHeartbeatThenCalm(){
+      if (!audioCtx) return;
+      // spike to ~120 BPM for a few seconds
+      if (beatTimer) { clearInterval(beatTimer); }
+      beatIntervalMs = 500;
+      beatTimer = setInterval(playHeartbeat, beatIntervalMs);
+      setTimeout(()=>{
+        if (beatTimer) { clearInterval(beatTimer); }
+        beatIntervalMs = 800;
+        beatTimer = setInterval(playHeartbeat, beatIntervalMs);
+      }, 4000);
+    }
+
+    // Enable audio + vibration on first user gesture
+    addEventListener("click", ()=>{ vibrationEnabled=true; initAudio(); }, {once:true});
+    addEventListener("touchstart", ()=>{ vibrationEnabled=true; initAudio(); }, {once:true});
+
+    // ===== Logging helpers =====
     function addLine(text, classes=[], baseSpeed=10){
       if(typeof classes==="string") classes=[classes];
       const line=document.createElement("div");
@@ -144,7 +212,7 @@
         } 
       })();
       logDiv.insertBefore(line,cursor);
-      if(logDiv.children.length>160) logDiv.removeChild(logDiv.children[0]);
+      if(logDiv.children.length>200) logDiv.removeChild(logDiv.children[0]);
     }
 
     const introLines=[
@@ -158,7 +226,31 @@
       "⚠ WARNING: Credentials leak detected..."
     ];
 
-    // Basic fingerprint (safe length)
+    // === User profile mimic ===
+    function getProfileName(){
+      try {
+        const q = new URLSearchParams(location.search);
+        const fromQuery = q.get("name");
+        if (fromQuery) {
+          localStorage.setItem("profileName", fromQuery);
+          return fromQuery;
+        }
+        const saved = localStorage.getItem("profileName");
+        if (saved) return saved;
+      } catch(e){}
+      const host = (location.hostname || "").split(".")[0];
+      if (host && host !== "localhost") return host.charAt(0).toUpperCase()+host.slice(1);
+      const platform = (navigator.platform || "").trim();
+      if (platform) return platform;
+      return "Administrator";
+    }
+
+    function logProfile(){
+      const name = getProfileName();
+      addLine(`[PROFILE] Registered Name: ${name}`, "fingerprintLog", 10);
+    }
+
+    // Fingerprint basics
     function logSystemFingerprint(){
       const lang=navigator.language;
       const platform=navigator.platform;
@@ -168,7 +260,7 @@
       addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10);
     }
 
-    // Extended fingerprint (avoids horizontal overflow; GPU truncated)
+    // Extended fingerprint
     function logMoreFingerprint(){
       const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "N/A");
       const dpr = (window.devicePixelRatio || 1);
@@ -194,7 +286,7 @@
       addLine(`[FINGERPRINT] Do Not Track: ${dnt}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Cookies: ${cookies} • Network: ${online}`, "fingerprintLog", 10);
 
-      // GPU info (truncated to avoid long lines)
+      // GPU info (truncated)
       try {
         const c = document.createElement("canvas");
         const gl = c.getContext("webgl") || c.getContext("experimental-webgl");
@@ -210,7 +302,7 @@
         }
       } catch(e) {}
 
-      // Media device counts (no permissions needed for counts)
+      // Media device counts
       if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
         navigator.mediaDevices.enumerateDevices().then(list=>{
           const cams = list.filter(d=>d.kind==="videoinput").length;
@@ -220,6 +312,7 @@
       }
     }
 
+    // IP + location
     function logIPandCity(){
       fetch("https://ipapi.co/json/")
         .then(r=>r.json())
@@ -231,43 +324,47 @@
         .catch(()=>addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
     }
 
+    // time
     function logCurrentTime(){
       addLine(`[TRACE] Session started at ${new Date().toLocaleString()}`, "grad", 10);
     }
 
+    // spinner
     function startSpinner(){
       const frames=["|","/","-","\\"];
       let i=0;
       setInterval(()=>{ spinnerEl.textContent="Loading "+frames[i]; i=(i+1)%frames.length; },150);
     }
 
-    // No numeric countdown — only finale after logs finish
-    function startCountdown() {
+    // Finale only (no numeric countdown)
+    function startFinale() {
       startVibration();
       setTimeout(() => {
         stopVibration();
+        spikeHeartbeatThenCalm();
         addLine(">>> PERSONAL DATA COMPROMISED <<<","glitch");
         addLine("[ PRESS ANY KEY TO CONTINUE ]",["grad","blink"]);
         addEventListener("keydown",()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; },{once:true});
       }, 1200);
     }
 
-    // Intro typing, then all logs, then finale
+    // Intro typing, then logs, then finale
     let idx=0;
     (function typeIntro(){
       if(idx<introLines.length){
         addLine(introLines[idx++], "grad");
         setTimeout(typeIntro, 900);
       } else {
+        logProfile();
         logSystemFingerprint();
         logIPandCity();
         logCurrentTime();
-        logMoreFingerprint();  // extra fingerprint lines
-        startCountdown();
+        logMoreFingerprint();
+        startFinale();
       }
     })();
 
-    // ===== MATRIX RAIN (Glow → Fade) =====
+    // ===== MATRIX RAIN (Glow → Fade with White Pulse) =====
     const canvas=document.getElementById("matrix");
     const ctx=canvas.getContext("2d");
     function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; }
@@ -299,16 +396,23 @@
     function getSymbol(){ return symbols[(Math.random()*symbols.length)|0]; }
     let hue=0, glowPhase=0;
 
+    // Pulse control: every ~30s, flash to white for ~1200ms
+    let pulseUntil = 0;
+    setInterval(()=>{ pulseUntil = performance.now() + 1200; }, 30000);
+
     function draw(){
-      // Lighter overlay so trails persist but stay sharp
+      // lighter overlay so trails persist but stay sharp
       ctx.fillStyle="rgba(0,0,0,0.05)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
       ctx.font=fontSize+"px Courier New";
 
-      // Pulse value to make heads glow a bit stronger over time
+      const now = performance.now();
+      const pulsing = now < pulseUntil;
+
+      // Pulse glow
       glowPhase = (glowPhase + 0.08) % (Math.PI * 2);
-      const glowPulse = 1 + Math.sin(glowPhase) * 0.6; // 0.4..1.6 boost
+      const glowPulse = 1 + Math.sin(glowPhase) * 0.6; // 0.4..1.6
 
       for(let i=0;i<columns;i++){
         yPos[i]+=speeds[i];
@@ -325,24 +429,25 @@
           const row=headRow-t; if(row<0||row>=rows) continue;
           const y=row*fontSize;
 
-          // Tail alpha fades out; head is strongest
+          // Tail alpha fades; head strongest
           const alpha = Math.max(0.06, 1 - t/trailLen[i]);
-
-          // Lightness: head brightest, tail dimmer
           const light = t===0 ? 82 : 58;
+          const blur  = t===0 ? 10 * glowPulse : 2;
 
-          // Slightly stronger glow on head, subtle on tail
-          const blur = t===0 ? 10 * glowPulse : 2;
-
-          ctx.fillStyle=`hsla(${(hue+i*15)%360}, 100%, ${light}%, ${alpha})`;
+          if (pulsing) {
+            // Flash to bright white during pulse
+            ctx.fillStyle = `hsla(0, 0%, 100%, ${alpha})`;
+          } else {
+            // Normal RGB rainbow
+            ctx.fillStyle=`hsla(${(hue+i*15)%360}, 100%, ${light}%, ${alpha})`;
+          }
           ctx.shadowColor=ctx.fillStyle;
           ctx.shadowBlur=blur;
-
           ctx.fillText(getSymbol(), baseX, y);
         }
       }
 
-      hue=(hue+2)%360;
+      if (!pulsing) hue=(hue+2)%360; // hold hue during pulse, resume after
       requestAnimationFrame(draw);
     }
     requestAnimationFrame(draw);
