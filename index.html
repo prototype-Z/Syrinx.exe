@@ -19,7 +19,7 @@
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      width: min(1100px, calc(100vw - 80px));
+      width: min(1100px, calc(100vw - 80px));   /* safe margin */
       height: min(78vh, calc(100vh - 80px));
       background: rgba(0,0,0,0.26);
       border: 1px solid #a020f0;
@@ -32,17 +32,39 @@
       box-sizing: border-box;
     }
 
+    /* LOG AREA */
     #log {
       color: #00ff00;
       font-size: 14px;
       line-height: 1.4;
-      white-space: pre-wrap; /* ✅ wrap long text, no horizontal scroll */
-      word-break: break-word;
+      white-space: pre-wrap;        /* wrap long lines */
+      word-break: break-word;       /* break words if necessary */
       text-shadow: 0 0 6px rgba(0,0,0,0.8);
-      padding: 12px;
-      overflow-y: auto; /* ✅ only vertical scroll */
+      padding: 18px 22px;           /* internal padding so text never touches border */
+      overflow-y: auto;             /* vertical scrolling only */
+      overflow-x: hidden;           /* no horizontal scroll */
       flex: 1;
       box-sizing: border-box;
+    }
+
+    /* styled vertical scrollbar (violet/purple) */
+    #log::-webkit-scrollbar {
+      width: 12px;
+    }
+    #log::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.12);
+      border-radius: 8px;
+      margin: 6px 0;
+    }
+    #log::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #a020f0 0%, #ff66cc 100%);
+      border-radius: 8px;
+      border: 2px solid rgba(0,0,0,0.18);
+    }
+    /* firefox */
+    #log {
+      scrollbar-width: thin;
+      scrollbar-color: #a020f0 rgba(0,0,0,0.12);
     }
 
     .error { color: #ff3b3b; font-weight: bold; display: block; }
@@ -52,12 +74,20 @@
 
     @keyframes blink { 50% { opacity: 0; } }
     @keyframes glitch {
-      0% { text-shadow: 2px 0 red; }
-      50% { text-shadow: -2px 0 purple; }
-      100% { text-shadow: 2px 0 red; }
+      0% { text-shadow: 2px 0 red; transform: translateX(0); }
+      50% { text-shadow: -2px 0 purple; transform: translateX(-1px); }
+      100% { text-shadow: 2px 0 red; transform: translateX(0); }
     }
 
     .grad { color: #00ff00; }
+
+    .asciiGrad {
+      background: linear-gradient(90deg, #a020f0, #ff66cc, #a020f0);
+      background-size: 300% 300%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      animation: asciiShift 4s ease infinite;
+    }
+    @keyframes asciiShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
     .fingerprintLog {
       font-weight: bold;
@@ -66,11 +96,7 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: fingerprintShift 3s ease infinite;
     }
-    @keyframes fingerprintShift {
-      0%{background-position:0% 50%}
-      50%{background-position:100% 50%}
-      100%{background-position:0% 50%}
-    }
+    @keyframes fingerprintShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
     .ispLog {
       font-weight: bold;
@@ -79,10 +105,29 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: ispShift 4s ease infinite;
     }
-    @keyframes ispShift {
-      0%{background-position:0% 50%}
-      50%{background-position:100% 50%}
-      100%{background-position:0% 50%}
+    @keyframes ispShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+    /* RIGHT-ALIGNED BREACH SEQUENCE (with small inset so it doesn't touch scrollbar) */
+    .breachRight {
+      text-align: right;
+      display: block;
+      color: #00ff00;       /* green like other logs */
+      padding-right: 22px;  /* matches hud padding so it sits visually inside */
+    }
+    .glitchRight {
+      text-align: right;
+      color: #ff3232;
+      font-weight: bold;
+      display: block;
+      animation: glitch 1s infinite;
+      padding-right: 22px;
+    }
+    .blinkRight {
+      text-align: right;
+      color: #00ff00;
+      display: block;
+      animation: blink 1s steps(1) infinite;
+      padding-right: 22px;
     }
 
     #spinner {
@@ -117,32 +162,44 @@
     const logDiv = document.getElementById("log");
     const spinnerEl = document.getElementById("spinner");
 
-    // cursor
+    // small cursor element
     const cursor = document.createElement("span");
     cursor.id = "cursor";
     cursor.textContent = "_";
     logDiv.appendChild(cursor);
     function updateCursor(){ logDiv.appendChild(cursor); }
 
-    // vibration
+    // vibration permission gating (user interaction needed on most mobile)
     let vibrationEnabled=false, vibrationInterval;
     function startVibration(){ if(navigator.vibrate && vibrationEnabled){ vibrationInterval=setInterval(()=>navigator.vibrate([200,100]),500);} }
     function stopVibration(){ if(navigator.vibrate){ navigator.vibrate(0); clearInterval(vibrationInterval);} }
-    addEventListener("click", ()=>{vibrationEnabled=true;},{once:true});
-    addEventListener("touchstart", ()=>{vibrationEnabled=true;},{once:true});
+    addEventListener("click", ()=>{ vibrationEnabled=true; }, { once: true });
+    addEventListener("touchstart", ()=>{ vibrationEnabled=true; }, { once: true });
 
-    // log text
+    // addLine helper accepts string or array classes
     function addLine(text, classes=[], baseSpeed=10){
-      if(typeof classes==="string") classes=[classes];
-      const line=document.createElement("div");
-      line.className=classes.join(" ");
-      let i=0;
-      (function type(){ if(i<text.length){ line.textContent+=text.charAt(i++); setTimeout(type, baseSpeed+Math.random()*15);} else updateCursor(); })();
-      logDiv.insertBefore(line,cursor);
-      if(logDiv.children.length>120) logDiv.removeChild(logDiv.children[0]);
+      if(typeof classes === "string") classes = [classes];
+      const line = document.createElement("div");
+      line.className = classes.join(" ");
+      let i = 0;
+      (function typeChar(){
+        if(i < text.length){
+          line.textContent += text.charAt(i++);
+          setTimeout(typeChar, baseSpeed + Math.random()*15);
+        } else {
+          // after line typed, ensure cursor appended back
+          updateCursor();
+          // keep the log scrolled to bottom so newest lines are visible
+          logDiv.scrollTop = logDiv.scrollHeight;
+        }
+      })();
+      logDiv.insertBefore(line, cursor);
+      // limit children (safeguard)
+      if(logDiv.children.length > 400) logDiv.removeChild(logDiv.children[0]);
     }
 
-    const introLines=[
+    // initial intro lines
+    const introLines = [
       "Establishing secure connection...",
       "Bypassing system firewall...",
       "Accessing local files...",
@@ -153,122 +210,149 @@
       "⚠ WARNING: Credentials leak detected..."
     ];
 
+    // fingerprint (without UA)
     function logSystemFingerprint(){
-      const lang=navigator.language, platform=navigator.platform, res=`${screen.width}x${screen.height}`;
+      const lang = navigator.language;
+      const platform = navigator.platform;
+      const res = `${screen.width}x${screen.height}`;
       addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10);
     }
 
+    // ip + location via ipapi
     function logIPandCity(){
       fetch("https://ipapi.co/json/")
-        .then(r=>r.json())
-        .then(d=>{
-          addLine(`[NET] Public IP: ${d.ip}`, "grad", 10);
-          addLine(`[TRACE] Location: ${d.city}, ${d.region}, ${d.country_name}`, "grad", 10);
-          addLine(`[NET] ISP: ${d.org}`, "ispLog", 10);
+        .then(res => res.json())
+        .then(data => {
+          addLine(`[NET] Public IP: ${data.ip}`, "grad", 10);
+          addLine(`[TRACE] Location: ${data.city}, ${data.region}, ${data.country_name}`, "grad", 10);
+          addLine(`[NET] ISP: ${data.org}`, "ispLog", 10);
         })
-        .catch(()=>addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
+        .catch(()=> addLine("[TRACE] Failed to fetch IP/Location data.", "error", 10));
     }
 
+    // time
     function logCurrentTime(){
       addLine(`[TRACE] Session started at ${new Date().toLocaleString()}`, "grad", 10);
     }
 
+    // spinner
     function startSpinner(){
-      const frames=["|","/","-","\\"]; let i=0;
-      setInterval(()=>{ spinnerEl.textContent="Loading "+frames[i]; i=(i+1)%frames.length; },150);
+      const frames = ["|","/","-","\\"];
+      let i = 0;
+      setInterval(()=>{ spinnerEl.textContent = "Loading " + frames[i]; i=(i+1)%frames.length; }, 150);
     }
 
-    function startCountdown(s){
+    // countdown: breach lines on right, and final messages also on right
+    function startCountdown(seconds){
       startVibration();
-      let n=s;
-      const t=setInterval(()=>{
-        if(n>0){
-          addLine(`System breach in: ${n}...`, "grad");
-          if(n===9) logSystemFingerprint();
-          if(n===8) logIPandCity();
-          if(n===7) logCurrentTime();
+      let n = seconds;
+      const t = setInterval(()=>{
+        if(n > 0){
+          addLine(`System breach in: ${n}...`, "breachRight");
+          if(n === 9) logSystemFingerprint();
+          if(n === 8) logIPandCity();
+          if(n === 7) logCurrentTime();
           n--;
         } else {
-          clearInterval(t); stopVibration();
-          addLine(">>> PERSONAL DATA COMPROMISED <<<","glitch");
-          addLine("[ PRESS ANY KEY TO CONTINUE ]",["grad","blink"]);
-          addEventListener("keydown",()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; },{once:true});
+          clearInterval(t);
+          stopVibration();
+          addLine(">>> PERSONAL DATA COMPROMISED <<<", "glitchRight");
+          addLine("[ PRESS ANY KEY TO CONTINUE ]", "blinkRight");
+          addEventListener("keydown", () => {
+            location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
+          }, { once: true });
         }
-      },1000);
+      }, 1000);
     }
 
-    let idx=0;
-    (function typeIntro(){ if(idx<introLines.length){ addLine(introLines[idx++],"grad"); setTimeout(typeIntro,1000);} else { startCountdown(10);} })();
+    // start intro typing then countdown
+    (function typeIntro(i=0){
+      if(i < introLines.length){
+        addLine(introLines[i], "grad");
+        setTimeout(()=> typeIntro(i+1), 900);
+      } else {
+        startCountdown(10);
+      }
+    })();
 
-    // MATRIX RAIN
-    const canvas=document.getElementById("matrix");
-    const ctx=canvas.getContext("2d");
-    function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; }
+    // MATRIX RAIN (symbols, comet trail, hue shifts)
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+    function sizeCanvas(){ canvas.width = innerWidth; canvas.height = innerHeight; }
     sizeCanvas();
 
-    const symbols="☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧"+
-                  "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿"+
-                  "巫鬼魔死血骷魑魍魎"+
-                  "⛧⛤⛥⛦⛨†‡☨☩⸸"+
-                  "♇♆♅♄♃♁☿☽☾"+
-                  "∆∑∏∫∂∇Ω¥ΞЖШФ"+
-                  "◘◙○◉◍◎◈◇◆◊"+
-                  "↑↓←→↔↕↖↗↘↙"+
-                  "!@#$%^&*()_+=-|<>?/".split("");
+    const symbols = (
+      "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧" +
+      "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿" +
+      "巫鬼魔死血骷魑魍魎" +
+      "⛧⛤⛥⛦⛨†‡☨☩⸸" +
+      "♇♆♅♄♃♁☿☽☾" +
+      "∆∑∏∫∂∇Ω¥ΞЖШФ" +
+      "◘◙○◉◍◎◈◇◆◊" +
+      "↑↓←→↔↕↖↗↘↙" +
+      "!@#$%^&*()_+=-|<>?/"
+    ).split("");
 
-    const fontSize=16;
-    let columns,rows,yPos,speeds,trailLen;
+    const fontSize = 16;
+    let columns, rows, yPos, speeds, trailLen;
     function initColumns(){
-      columns=Math.floor(canvas.width/fontSize);
-      rows=Math.ceil(canvas.height/fontSize);
-      yPos=new Array(columns).fill(0).map(()=>Math.random()*rows);
-      speeds=new Array(columns).fill(0).map(()=>0.8+Math.random()*1.8);
-      trailLen=new Array(columns).fill(0).map(()=>5+Math.floor(Math.random()*7));
+      columns = Math.floor(canvas.width / fontSize);
+      rows = Math.ceil(canvas.height / fontSize);
+      yPos = new Array(columns).fill(0).map(()=> Math.random() * rows);
+      speeds = new Array(columns).fill(0).map(()=> 0.8 + Math.random() * 1.8);
+      trailLen = new Array(columns).fill(0).map(()=> 5 + Math.floor(Math.random() * 7));
     }
     initColumns();
 
-    function getSymbol(){ return symbols[(Math.random()*symbols.length)|0]; }
-    let hue=0;
+    function getSymbol(){ return symbols[(Math.random() * symbols.length) | 0]; }
+    let hue = 0;
 
     function draw(){
       ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle="rgba(0,0,0,0.2)";
+      // slight background fade so trails linger a bit (comet)
+      ctx.fillStyle = "rgba(0,0,0,0.2)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      ctx.font=fontSize+"px Courier New";
+      ctx.font = fontSize + "px Courier New";
 
       for(let i=0;i<columns;i++){
-        yPos[i]+=speeds[i];
-        if(yPos[i]>=rows+trailLen[i]){
-          yPos[i]=-Math.random()*rows*0.6;
-          speeds[i]=0.8+Math.random()*1.8;
-          trailLen[i]=5+Math.floor(Math.random()*7);
+        yPos[i] += speeds[i];
+        if(yPos[i] >= rows + trailLen[i]){
+          yPos[i] = -Math.random() * rows * 0.6;
+          speeds[i] = 0.8 + Math.random() * 1.8;
+          trailLen[i] = 5 + Math.floor(Math.random() * 7);
         }
 
-        const baseX=i*fontSize;
-        const headRow=Math.floor(yPos[i]);
+        const baseX = i * fontSize;
+        const headRow = Math.floor(yPos[i]);
 
-        for(let t=0;t<trailLen[i];t++){
-          const row=headRow-t; if(row<0||row>=rows) continue;
-          const y=row*fontSize;
-          const alpha=Math.max(0,1 - t/trailLen[i]);
-          const light=t===0?66:48;
-          ctx.fillStyle=`hsla(${(hue+i*15)%360},100%,${light}%,${alpha})`;
-          ctx.shadowColor=ctx.fillStyle;
-          ctx.shadowBlur=t===0?8:3;
+        for(let t=0; t < trailLen[i]; t++){
+          const row = headRow - t;
+          if(row < 0 || row >= rows) continue;
+          const y = row * fontSize;
+          const alpha = Math.max(0, 1 - t / trailLen[i]);
+          const light = t === 0 ? 66 : 48;
+          ctx.fillStyle = `hsla(${(hue + i*15) % 360}, 100%, ${light}%, ${alpha})`;
+          ctx.shadowColor = ctx.fillStyle;
+          ctx.shadowBlur = t === 0 ? 8 : 3;
           ctx.fillText(getSymbol(), baseX, y);
         }
       }
 
-      hue=(hue+2)%360;
+      hue = (hue + 2) % 360;
       requestAnimationFrame(draw);
     }
     requestAnimationFrame(draw);
-    addEventListener("resize", ()=>{ sizeCanvas(); initColumns(); });
 
-    // Start visuals
+    // handle resize
+    addEventListener("resize", ()=>{
+      sizeCanvas();
+      initColumns();
+    });
+
+    // start spinner
     startSpinner();
   </script>
 </body>
