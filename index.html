@@ -248,7 +248,7 @@
     function getSymbol(){ return symbols[(Math.random()*symbols.length)|0]; }
 
     function draw(){
-      ctx.fillStyle="rgba(0,0,0,0.20)";
+      ctx.fillStyle="rgba(0,0,0,0.15)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.font=fontSize+"px Courier New";
 
@@ -268,11 +268,12 @@
           const y=row*fontSize;
 
           const alpha = Math.max(0.05, 1 - t/trailLen[i]);
-          const light = t===0 ? 62 : 44;
+          const light = t===0 ? 52 : 40;
 
           ctx.fillStyle=`hsla(${columnHue[i]}, 90%, ${light}%, ${alpha})`;
-          ctx.shadowColor=ctx.fillStyle;
-          ctx.shadowBlur=t===0 ? 6 : 1;
+          // Flicker-free: remove glow entirely
+          // (shadows on animated heads can create perceived brightness flicker on some GPUs)
+          ctx.shadowBlur = 0;
           ctx.fillText(getSymbol(), baseX, y);
         }
       }
