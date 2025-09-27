@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>System - Hacked</title>
+  <title>System - Syrinx.exe</title>
   <style>
     html, body {
       margin: 0;
@@ -13,7 +13,7 @@
       overflow: hidden;
     }
 
-    /* ======= SINGLE CENTER HUD (always fully on-screen) ======= */
+    /* ======= SINGLE CENTER HUD ======= */
     #hud {
       position: fixed;
       left: 50%;
@@ -21,17 +21,19 @@
       transform: translate(-50%, -50%);
       width: min(1100px, calc(100vw - 48px));
       height: min(78vh, calc(100vh - 48px));
-      padding: calc(18px + env(safe-area-inset-top, 0)) calc(22px + env(safe-area-inset-right, 0))
-               calc(18px + env(safe-area-inset-bottom, 0)) calc(22px + env(safe-area-inset-left, 0));
+      padding: calc(18px + env(safe-area-inset-top, 0)) 
+               calc(22px + env(safe-area-inset-right, 0))
+               calc(18px + env(safe-area-inset-bottom, 0)) 
+               calc(22px + env(safe-area-inset-left, 0));
       background: rgba(0,0,0,0.26);
       border: 1px solid #a020f0;
       border-radius: 12px;
       backdrop-filter: blur(2px);
       z-index: 4;
-      overflow: hidden;       /* no scrollbars */
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      box-sizing: border-box; /* include border in size */
+      box-sizing: border-box;
     }
 
     #log {
@@ -117,7 +119,6 @@
       pointer-events: none;
     }
 
-    /* Flat matrix canvas */
     canvas {
       position: fixed;
       inset: 0;
@@ -140,7 +141,7 @@
     const asciiBox = document.getElementById("asciiBox");
     const spinnerEl = document.getElementById("spinner");
 
-    // typing cursor
+    // cursor
     const cursor = document.createElement("span");
     cursor.id = "cursor";
     cursor.textContent = "_";
@@ -154,7 +155,7 @@
     addEventListener("click", ()=>{vibrationEnabled=true;},{once:true});
     addEventListener("touchstart", ()=>{vibrationEnabled=true;},{once:true});
 
-    // logger
+    // log text
     function addLine(text, classes=[], baseSpeed=10){
       if(typeof classes==="string") classes=[classes];
       const line=document.createElement("div");
@@ -238,7 +239,7 @@ HH======#H###############H#######################
     let idx=0;
     (function typeIntro(){ if(idx<introLines.length){ addLine(introLines[idx++],"grad"); setTimeout(typeIntro,1000);} else { startCountdown(10);} })();
 
-    // MATRIX RAIN (comet trails + speed variation + band fix)
+    // MATRIX RAIN (with comet trails, hybrid clear, no bands)
     const canvas=document.getElementById("matrix");
     const ctx=canvas.getContext("2d");
     function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; }
@@ -270,9 +271,11 @@ HH======#H###############H#######################
 
     function draw(){
       frame++;
-      ctx.fillStyle="rgba(0,0,0,0.12)";
+
+      // Hybrid clear (fixes dark bands)
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle="rgba(0,0,0,0.2)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
-      if(frame%120===0){ ctx.fillStyle="rgba(0,0,0,0.35)"; ctx.fillRect(0,0,canvas.width,canvas.height); }
 
       ctx.font=fontSize+"px Courier New";
 
