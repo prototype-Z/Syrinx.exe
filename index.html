@@ -5,103 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>System - Syrinx.exe</title>
   <style>
-    html, body {
-      margin: 0;
-      background: #000;
-      font-family: "Courier New", monospace;
-      height: 100%;
-      overflow: hidden;
-    }
+    html, body { margin:0; background:#000; font-family:"Courier New", monospace; height:100%; overflow:hidden; }
 
     /* Global vignette + fade-in */
-    #shade {
-      position: fixed;
-      inset: 0;
-      z-index: 2;
-      pointer-events: none;
+    #shade { position:fixed; inset:0; z-index:2; pointer-events:none;
       background:
-        radial-gradient(120% 80% at 50% 60%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.25) 45%, rgba(0,0,0,0.7) 100%),
-        linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.55));
-      opacity: 0;
-      animation: shadeFadeIn 900ms ease-out 200ms forwards;
-    }
-    @keyframes shadeFadeIn { to { opacity: 1; } }
+        radial-gradient(120% 80% at 50% 60%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.28) 45%, rgba(0,0,0,0.80) 100%),
+        linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.65));
+      opacity:0; animation:shadeFadeIn 900ms ease-out 200ms forwards; }
+    @keyframes shadeFadeIn { to { opacity:1; } }
 
     /* HUD */
-    #hud {
-      position: fixed;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: min(1100px, calc(100vw - 48px));
-      height: min(78vh, calc(100vh - 48px));
-      padding: 18px 22px;
-      background: rgba(0,0,0,0.55);
-      border: 1px solid #a020f0;
-      border-radius: 12px;
-      backdrop-filter: blur(2px);
-      z-index: 4;
-      overflow-y: auto;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-      box-sizing: border-box;
-      box-shadow: 0 12px 60px rgba(0,0,0,0.6);
-      animation: hudPop 300ms ease-out;
-    }
-    @keyframes hudPop { from { transform: translate(-50%, -48%) scale(0.98); opacity: 0 } }
+    #hud { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:min(1100px, calc(100vw - 48px)); height:min(78vh, calc(100vh - 48px)); padding:18px 22px; background:rgba(0,0,0,0.62); border:1px solid #a020f0; border-radius:12px; backdrop-filter:blur(2px); z-index:4; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column; box-sizing:border-box; box-shadow:0 12px 60px rgba(0,0,0,0.6); animation:hudPop 300ms ease-out; }
+    @keyframes hudPop { from { transform:translate(-50%,-48%) scale(0.98); opacity:0 } }
 
-    #log {
-      color: #00ff00;
-      font-size: 14px;
-      line-height: 1.4;
-      white-space: pre;
-      text-shadow: 0 0 6px rgba(0,0,0,0.8);
-      flex: 1;
-    }
+    #log { color:#00ff00; font-size:14px; line-height:1.4; white-space:pre; text-shadow:0 0 6px rgba(0,0,0,0.8); flex:1; }
+    .error{ color:#ff3b3b; font-weight:bold; display:block; }
+    .blink{ animation:blink 1s steps(1) infinite; display:block; }
+    @keyframes blink{ 50%{ opacity:0; } }
+    .grad{ color:#00ff00; }
 
-    .error { color: #ff3b3b; font-weight: bold; display: block; }
-    .blink  { animation: blink 1s steps(1) infinite; display: block; }
-    @keyframes blink { 50% { opacity: 0; } }
-    .grad { color: #00ff00; }
+    #spinner { position:fixed; top:8px; left:50%; transform:translateX(-50%); font-weight:bold; color:#ff66cc; z-index:6; text-shadow:0 0 6px rgba(0,0,0,0.8); pointer-events:none; opacity:.75; }
 
-    #spinner {
-      position: fixed;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-weight: bold;
-      color: #ff66cc;
-      z-index: 6;
-      text-shadow: 0 0 6px rgba(0,0,0,0.8);
-      pointer-events: none;
-      opacity: 0.75;
-    }
-
-    canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      background: black;
-    }
+    canvas { position:fixed; inset:0; width:100%; height:100%; z-index:1; background:#000; }
 
     /* Bottom fade */
-    #fade {
-      position: fixed;
-      inset: 0;
-      z-index: 2;
-      pointer-events: none;
-      background: linear-gradient(to bottom,
-        rgba(0,0,0,0) 55%,
-        rgba(0,0,0,0.55) 78%,
-        rgba(0,0,0,0.88) 100%);
-    }
+    #fade { position:fixed; inset:0; z-index:2; pointer-events:none; background:linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.7) 75%, rgba(0,0,0,0.95) 100%); }
 
-    /* Static (non-animated) styles to avoid flicker */
-    .fingerprintLog { color: #9ad; font-weight: bold; }
-    .ispLog { color: #ddd; font-weight: bold; }
+    .fingerprintLog { color:#9ad; font-weight:bold; }
+    .ispLog { color:#ddd; font-weight:bold; }
+
+    /* Tiny control panel */
+    #controls { position:fixed; right:10px; top:10px; z-index:5; background:rgba(0,0,0,0.55); border:1px solid #6d3b99; border-radius:10px; padding:8px 10px; color:#ddd; font-size:12px; display:flex; gap:10px; align-items:center; }
+    #controls label{ display:flex; align-items:center; gap:6px; }
+    #controls input[type=range]{ width:110px; }
+    #controls .hint{ opacity:.6; margin-left:6px; }
   </style>
 </head>
 <body>
@@ -111,28 +49,26 @@
 
   <div id="hud"><div id="log"></div></div>
   <div id="spinner"></div>
+  <div id="controls">
+    <label>Speed <input id="speed" type="range" min="0" max="1000" step="10" value="0"> <span id="speedVal">+0%</span></label>
+    <label>Density <input id="density" type="range" min="0.7" max="1.4" step="0.05" value="1.00"></label>
+    <label>Detail <input id="detail" type="range" min="10" max="18" step="1" value="14"></label>
+    <span class="hint">press C to hide</span>
+  </div>
 
   <script>
     const logDiv = document.getElementById("log");
     const spinnerEl = document.getElementById("spinner");
 
     // Cursor
-    const cursor = document.createElement("span");
-    cursor.id = "cursor"; cursor.textContent = "_"; logDiv.appendChild(cursor);
+    const cursor = document.createElement("span"); cursor.id = "cursor"; cursor.textContent = "_"; logDiv.appendChild(cursor);
     function updateCursor(){ logDiv.appendChild(cursor); }
 
     // Logging helper
-    function addLine(text, classes=[], baseSpeed=10){
-      if(typeof classes==="string") classes=[classes];
-      const line=document.createElement("div"); line.className=classes.join(" ");
-      let i=0; (function type(){ if(i<text.length){ line.textContent+=text.charAt(i++); setTimeout(type, baseSpeed+Math.random()*15); } else { updateCursor(); logDiv.scrollTop=logDiv.scrollHeight; } })();
-      logDiv.insertBefore(line,cursor);
-      if(logDiv.children.length>200) logDiv.removeChild(logDiv.children[0]);
-    }
+    function addLine(text, classes=[], baseSpeed=10){ if(typeof classes==="string") classes=[classes]; const line=document.createElement("div"); line.className=classes.join(" "); let i=0; (function type(){ if(i<text.length){ line.textContent+=text.charAt(i++); setTimeout(type, baseSpeed+Math.random()*15); } else { updateCursor(); logDiv.scrollTop=logDiv.scrollHeight; } })(); logDiv.insertBefore(line,cursor); if(logDiv.children.length>200) logDiv.removeChild(logDiv.children[0]); }
 
-    // ===== Heartbeat + Vibration (starts after first click/tap) =====
-    let vibrationEnabled=false, vibrationInterval;
-    let audioCtx=null, beatTimer=null, beatIntervalMs=1000; // ~60 BPM
+    // ===== Heartbeat + Vibration =====
+    let vibrationEnabled=false, vibrationInterval; let audioCtx=null, beatTimer=null, beatIntervalMs=1000;
     function startVibration(){ if(navigator.vibrate && vibrationEnabled){ vibrationInterval=setInterval(()=>navigator.vibrate([200,100]),500);} }
     function stopVibration(){ if(navigator.vibrate){ navigator.vibrate(0); clearInterval(vibrationInterval);} }
     function initAudio(){ if(audioCtx) return; try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); startHeartbeat(); }catch(e){} }
@@ -142,159 +78,98 @@
     addEventListener("click",()=>{ vibrationEnabled=true; initAudio(); },{once:true});
     addEventListener("touchstart",()=>{ vibrationEnabled=true; initAudio(); },{once:true});
 
-    const introLines=[
-      "Establishing secure connection...",
-      "Bypassing system firewall...",
-      "Accessing local files...",
-      "Extracting stored passwords...",
-      "Scanning browser cookies...",
-      ">>> SYSTEM OVERRIDDEN <<<",
-      "",
-      "⚠ WARNING: Credentials leak detected..."
-    ];
+    const introLines=["Establishing secure connection...","Bypassing system firewall...","Accessing local files...","Extracting stored passwords...","Scanning browser cookies...", ">>> SYSTEM OVERRIDDEN <<<","","⚠ WARNING: Credentials leak detected..."];
 
-    // Profile & fingerprint logs (no animated gradients)
-    function logProfile(){
-      try {
-        const q=new URLSearchParams(location.search); const fromQuery=q.get("name");
-        if(fromQuery){ localStorage.setItem("profileName",fromQuery); addLine(`[PROFILE] Registered Name: ${fromQuery}`, "fingerprintLog", 10); return; }
-        const saved=localStorage.getItem("profileName"); if(saved){ addLine(`[PROFILE] Registered Name: ${saved}`, "fingerprintLog", 10); return; }
-      } catch(e){}
-      const host=(location.hostname||"").split(".")[0];
-      const fallback= host && host!=="localhost" ? host.charAt(0).toUpperCase()+host.slice(1) : (navigator.platform||"Administrator");
-      addLine(`[PROFILE] Registered Name: ${fallback}`, "fingerprintLog", 10);
-    }
-    function logSystemFingerprint(){
-      const lang=navigator.language; const platform=navigator.platform; const res=`${screen.width}x${screen.height}`;
-      addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10);
-    }
-    function logMoreFingerprint(){
-      const tz=(Intl.DateTimeFormat().resolvedOptions().timeZone||"N/A");
-      const dpr=(window.devicePixelRatio||1);
-      const colorDepth=screen.colorDepth;
-      const availRes=`${screen.availWidth}x${screen.availHeight}`;
-      const viewport=`${window.innerWidth}x${window.innerHeight}`;
-      const cores=navigator.hardwareConcurrency||"N/A";
-      const memory=navigator.deviceMemory?`${navigator.deviceMemory}GB`:"N/A";
-      const touch=(navigator.maxTouchPoints>0)?`${navigator.maxTouchPoints}-point`:"none";
-      const langList=(navigator.languages||[navigator.language]).join(", ");
-      const dnt=(navigator.doNotTrack=="1"||window.doNotTrack=="1"||navigator.msDoNotTrack=="1")?"enabled":"disabled";
-      const online=navigator.onLine?"online":"offline";
-      const cookies=navigator.cookieEnabled?"enabled":"disabled";
-      addLine(`[FINGERPRINT] Timezone: ${tz}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Viewport: ${viewport}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Screen avail: ${availRes} @ ${colorDepth}-bit`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Pixel ratio: ${dpr}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] CPU cores: ${cores}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] RAM (approx): ${memory}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Touch: ${touch}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Languages: ${langList}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Do Not Track: ${dnt}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Cookies: ${cookies} • Network: ${online}`, "fingerprintLog", 10);
-      try{ const c=document.createElement("canvas"); const gl=c.getContext("webgl")||c.getContext("experimental-webgl"); if(gl){ const ext=gl.getExtension("WEBGL_debug_renderer_info"); if(ext){ const vendor=gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)||""; const renderer=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||""; let info=`${vendor} ${renderer}`.trim(); if(info.length>60) info=info.slice(0,57)+"…"; if(info) addLine(`[FINGERPRINT] GPU: ${info}`, "fingerprintLog", 10); } } }catch(e){}
-      if(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices){ navigator.mediaDevices.enumerateDevices().then(list=>{ const cams=list.filter(d=>d.kind==="videoinput").length; const mics=list.filter(d=>d.kind==="audioinput").length; addLine(`[FINGERPRINT] Devices: ${cams} camera(s), ${mics} mic(s)`, "fingerprintLog", 10); }).catch(()=>{}); }
-    }
-    function logIPandCity(){
-      fetch("https://ipapi.co/json/")
-        .then(r=>r.json())
-        .then(d=>{
-          addLine(`[NET] Public IP: ${d.ip}`, "grad", 10);
-          addLine(`[TRACE] Location: ${d.city}, ${d.region}, ${d.country_name}`, "grad", 10);
-          addLine(`[NET] ISP: ${d.org}`, "ispLog", 10);
-        })
-        .catch(()=>addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
-    }
+    function logProfile(){ try { const q=new URLSearchParams(location.search); const fromQuery=q.get("name"); if(fromQuery){ localStorage.setItem("profileName",fromQuery); addLine(`[PROFILE] Registered Name: ${fromQuery}`, "fingerprintLog", 10); return; } const saved=localStorage.getItem("profileName"); if(saved){ addLine(`[PROFILE] Registered Name: ${saved}`, "fingerprintLog", 10); return; } } catch(e){} const host=(location.hostname||"").split(".")[0]; const fallback= host && host!=="localhost" ? host.charAt(0).toUpperCase()+host.slice(1) : (navigator.platform||"Administrator"); addLine(`[PROFILE] Registered Name: ${fallback}`, "fingerprintLog", 10); }
+    function logSystemFingerprint(){ const lang=navigator.language; const platform=navigator.platform; const res=`${screen.width}x${screen.height}`; addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10); }
+    function logMoreFingerprint(){ const tz=(Intl.DateTimeFormat().resolvedOptions().timeZone||"N/A"); const dpr=(window.devicePixelRatio||1); const colorDepth=screen.colorDepth; const availRes=`${screen.availWidth}x${screen.availHeight}`; const viewport=`${window.innerWidth}x${window.innerHeight}`; const cores=navigator.hardwareConcurrency||"N/A"; const memory=navigator.deviceMemory?`${navigator.deviceMemory}GB`:"N/A"; const touch=(navigator.maxTouchPoints>0)?`${navigator.maxTouchPoints}-point`:"none"; const langList=(navigator.languages||[navigator.language]).join(", "); const dnt=(navigator.doNotTrack==="1"||window.doNotTrack==="1"||navigator.msDoNotTrack==="1")?"enabled":"disabled"; const online=navigator.onLine?"online":"offline"; const cookies=navigator.cookieEnabled?"enabled":"disabled"; addLine(`[FINGERPRINT] Timezone: ${tz}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Viewport: ${viewport}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Screen avail: ${availRes} @ ${colorDepth}-bit`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Pixel ratio: ${dpr}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] CPU cores: ${cores}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] RAM (approx): ${memory}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Touch: ${touch}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Languages: ${langList}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Do Not Track: ${dnt}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Cookies: ${cookies} • Network: ${online}`, "fingerprintLog", 10); try{ const c=document.createElement("canvas"); const gl=c.getContext("webgl")||c.getContext("experimental-webgl"); if(gl){ const ext=gl.getExtension("WEBGL_debug_renderer_info"); if(ext){ const vendor=gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)||""; const renderer=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||""; let info=`${vendor} ${renderer}`.trim(); if(info.length > 60) info = info.slice(0,57) + "…"; if(info) addLine(`[FINGERPRINT] GPU: ${info}`, "fingerprintLog", 10); } } }catch(e){} if(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices){ navigator.mediaDevices.enumerateDevices().then(list=>{ const cams=list.filter(d=>d.kind==="videoinput").length; const mics=list.filter(d=>d.kind==="audioinput").length; addLine(`[FINGERPRINT] Devices: ${cams} camera(s), ${mics} mic(s)`, "fingerprintLog", 10); }).catch(()=>{}); } }
+    function logIPandCity(){ fetch("https://ipapi.co/json/").then(r=>r.json()).then(d=>{ addLine(`[NET] Public IP: ${d.ip}`, "grad", 10); addLine(`[TRACE] Location: ${d.city}, ${d.region}, ${d.country_name}`, "grad", 10); addLine(`[NET] ISP: ${d.org}`, "ispLog", 10); }).catch(()=>addLine("[TRACE] Failed to fetch IP/Location data.", "error")); }
     function logCurrentTime(){ addLine(`[TRACE] Session started at ${new Date().toLocaleString()}`, "grad", 10); }
 
     function startSpinner(){ const frames=["|","/","-","\\"]; let i=0; setInterval(()=>{ spinnerEl.textContent="Loading "+frames[i]; i=(i+1)%frames.length; },150); }
 
-    function startFinale(){
-      startVibration();
-      setTimeout(()=>{
-        stopVibration();
-        initAudio();
-        spikeHeartbeatThenCalm();
-        addLine(">>> PERSONAL DATA COMPROMISED <<<","error");
-        addLine("[ PRESS ANY KEY TO CONTINUE ]",["grad","blink"]);
-        const handler=()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; };
-        addEventListener("keydown", handler, {once:true});
-      },1200);
-    }
+    function startFinale(){ startVibration(); setTimeout(()=>{ stopVibration(); initAudio(); spikeHeartbeatThenCalm(); addLine(">>> PERSONAL DATA COMPROMISED <<<","error"); addLine("[ PRESS ANY KEY TO CONTINUE ]",["grad","blink"]); const handler=()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; }; addEventListener("keydown", handler, {once:true}); },1200); }
 
     let idx=0; (function typeIntro(){ if(idx<introLines.length){ addLine(introLines[idx++], "grad"); setTimeout(typeIntro, 900); } else { logProfile(); logSystemFingerprint(); logIPandCity(); logCurrentTime(); logMoreFingerprint(); startFinale(); } })();
 
-    // ===== FIXED RGB MATRIX RAIN =====
-    const canvas=document.getElementById("matrix");
-    const ctx=canvas.getContext("2d");
-    function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; }
-    sizeCanvas();
+    // ===== RGB MATRIX RAIN — Classic, smooth, configurable =====
+    const canvas=document.getElementById("matrix"); const ctx=canvas.getContext("2d");
+    const speedInput=document.getElementById('speed'); const densityInput=document.getElementById('density'); const speedVal=document.getElementById('speedVal'); const detailInput=document.getElementById('detail');
+    let speedScale=1.0, densityScale=1.0;
+    speedInput.oninput = ()=> { const pct = parseInt(speedInput.value,10) || 0; speedScale = 1 + (pct/100); if (speedVal) speedVal.textContent = `+${pct}%`; };
+    densityInput.oninput = ()=> densityScale = parseFloat(densityInput.value);
+    detailInput.oninput = ()=> { fontSize = parseInt(detailInput.value,10) || 14; sizeCanvas(); initColumns(); };
+    document.addEventListener('keydown', e=>{ if(e.key==='c' || e.key==='C'){ const c=document.getElementById('controls'); c.style.display = (c.style.display==='none')? 'flex':'none'; } });
 
-    const symbols=("01☠☢☣☤☥☦☧☨☩☪✡✩✪✫✬✭✮✯✰").split("");
-    const fontSize=16;
-    let columns,rows,yPos,speeds,trailLen,columnHue;
+    // IMPORTANT: safe ASCII symbols (backslash escaped)
+    const symbols=("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%&*+=-<>|/\\").split("");
+    let fontSize=14; // adjustable via Detail slider (10–18)
+    let columns,rows,yPos,speeds,vel,trailLen,columnHue;
 
-    function initColumns(){
-      columns=Math.floor(canvas.width/fontSize);
-      rows=Math.ceil(canvas.height/fontSize);
-      yPos=new Array(columns).fill(0).map(()=>Math.random()*rows);
-      speeds=new Array(columns).fill(0).map(()=>0.9+Math.random()*1.8);
-      trailLen=new Array(columns).fill(0).map(()=>6+Math.floor(Math.random()*8));
-      columnHue=new Array(columns).fill(0).map((_,i)=> (i*18)%360);
-    }
+    function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; rows=Math.ceil(canvas.height/fontSize); columns=Math.floor(canvas.width/fontSize); }
+    function initColumns(){ sizeCanvas(); yPos=new Array(columns).fill(0).map(()=>Math.random()*rows); speeds=new Array(columns).fill(0).map(()=> 4.0 + Math.random()*2.0 ); // 4–6 r/s baseline
+      vel=new Array(columns).fill(0); trailLen=new Array(columns).fill(0).map(()=> 8 + Math.floor(Math.random()*7) ); // 8–14
+      columnHue=new Array(columns).fill(0).map((_,i)=> (i*18)%360); }
     initColumns();
 
     function getSymbol(){ return symbols[(Math.random()*symbols.length)|0]; }
 
+    let lastTime=performance.now();
     function draw(){
-      ctx.fillStyle="rgba(0,0,0,0.15)";
-      ctx.fillRect(0,0,canvas.width,canvas.height);
+      const now=performance.now(); const dt=Math.min((now-lastTime)/1000,0.05); lastTime=now;
+      ctx.fillStyle="rgba(0,0,0,0.14)"; ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.font=fontSize+"px Courier New";
 
       for(let i=0;i<columns;i++){
-        yPos[i]+=speeds[i];
-        if(yPos[i]>=rows+trailLen[i]){
-          yPos[i]=-Math.random()*rows*0.6;
-          speeds[i]=0.9+Math.random()*1.8;
-          trailLen[i]=6+Math.floor(Math.random()*8);
-        }
+        const target = speeds[i]*speedScale; // rows/sec
+        vel[i] += (target - vel[i]) * (1 - Math.exp(-dt*3));
+        yPos[i] += vel[i]*dt;
 
-        const baseX=i*fontSize;
-        const headRow=Math.floor(yPos[i]);
+        const effTrail = Math.max(4, Math.round(trailLen[i]*densityScale));
+        if(yPos[i] >= rows + effTrail){ yPos[i] = -Math.random()*rows*0.5; vel[i] = 0; }
 
-        for(let t=0;t<trailLen[i];t++){
-          const row=headRow-t; if(row<0||row>=rows) continue;
-          const y=row*fontSize;
-
-          const alpha = Math.max(0.05, 1 - t/trailLen[i]);
-          const light = t===0 ? 52 : 40;
-
-          ctx.fillStyle=`hsla(${columnHue[i]}, 90%, ${light}%, ${alpha})`;
-          // Flicker-free: remove glow entirely
-          // (shadows on animated heads can create perceived brightness flicker on some GPUs)
-          ctx.shadowBlur = 0;
+        const baseX = i*fontSize;
+        for(let t=0; t<effTrail; t++){
+          const rowPos = yPos[i] - t; if(rowPos<0 || rowPos>=rows) continue; const y=rowPos*fontSize;
+          const alpha = Math.max(0.05, 1 - t/effTrail);
+          const light = t===0 ? 60 : 46; // classic brightness
+          ctx.fillStyle = `hsla(${columnHue[i]}, 90%, ${light}%, ${alpha})`;
+          ctx.shadowBlur = 0; // no glow -> no flicker
           ctx.fillText(getSymbol(), baseX, y);
         }
       }
-
       requestAnimationFrame(draw);
     }
     requestAnimationFrame(draw);
 
-    addEventListener("resize", ()=>{ sizeCanvas(); initColumns(); });
+    // initialize slider label and scale
+    if (speedInput) { speedInput.dispatchEvent(new Event('input')); }
+    if (detailInput) { detailInput.dispatchEvent(new Event('input')); }
 
-    // ====== SMOKE TESTS ======
+    addEventListener("resize", ()=>{ initColumns(); });
+
+    // Smoke tests (do not modify existing ones; add more below)
     function runTests(){
       const tests=[]; const assert=(name,cond)=>tests.push({name,pass:!!cond});
+      // Existing tests
       assert("canvas exists", !!document.getElementById('matrix'));
       assert("HUD exists", !!document.getElementById('hud'));
       assert("addLine available", typeof addLine==='function');
       assert("startFinale available", typeof startFinale==='function');
       assert("requestAnimationFrame available", typeof requestAnimationFrame==='function');
+      // New tests
+      assert("symbols populated", Array.isArray(symbols) && symbols.length > 10);
+      assert("backslash escaped", symbols.includes("\\"));
+      const beforeCols = columns; const prevFont = fontSize; fontSize = prevFont === 14 ? 12 : 14; sizeCanvas(); initColumns(); const afterCols = columns; fontSize = prevFont; sizeCanvas(); initColumns();
+      assert("columns recompute on detail change", beforeCols !== afterCols);
+      if (speedInput){ speedInput.value = "1000"; speedInput.dispatchEvent(new Event('input')); }
+      assert("speedScale hits 11x at +1000%", Math.abs(speedScale - 11) < 1e-9);
+      // Controls present
+      assert("controls visible", !!document.getElementById('controls'));
+      assert("speed value label present", !!document.getElementById('speedVal'));
+      console.table(tests);
       addLine(`[TEST] Ran ${tests.length} tests`, 'grad');
       tests.forEach(t=> addLine(`[TEST] ${t.pass? 'PASS':'FAIL'} - ${t.name}`, t.pass? 'grad':'error'));
-      console.table(tests);
     }
 
     startSpinner();
