@@ -19,7 +19,7 @@
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      width: min(1100px, calc(100vw - 80px));   /* safe margin */
+      width: min(1100px, calc(100vw - 80px));
       height: min(78vh, calc(100vh - 80px));
       background: rgba(0,0,0,0.26);
       border: 1px solid #a020f0;
@@ -36,10 +36,11 @@
       color: #00ff00;
       font-size: 14px;
       line-height: 1.4;
-      white-space: pre;
+      white-space: pre-wrap; /* ✅ wrap long text, no horizontal scroll */
+      word-break: break-word;
       text-shadow: 0 0 6px rgba(0,0,0,0.8);
-      padding: 12px; /* ✅ padding inside so text never touches outline */
-      overflow-y: auto; /* ✅ keep logs inside box */
+      padding: 12px;
+      overflow-y: auto; /* ✅ only vertical scroll */
       flex: 1;
       box-sizing: border-box;
     }
@@ -153,8 +154,7 @@
     ];
 
     function logSystemFingerprint(){
-      const ua=navigator.userAgent, lang=navigator.language, platform=navigator.platform, res=`${screen.width}x${screen.height}`;
-      addLine(`[FINGERPRINT] User-Agent: ${ua}`, "fingerprintLog", 10);
+      const lang=navigator.language, platform=navigator.platform, res=`${screen.width}x${screen.height}`;
       addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10);
