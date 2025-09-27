@@ -68,7 +68,18 @@
     function updateCursor(){ logDiv.appendChild(cursor); }
 
     // Logging helper
-    function addLine(text, classes=[], baseSpeed=10){ if(typeof classes==="string") classes=[classes]; const line=document.createElement("div"); line.className=classes.join(" "); let i=0; (function type(){ if(i<text.length){ line.textContent+=text.charAt(i++); setTimeout(type, baseSpeed+Math.random()*15); } else { updateCursor(); logDiv.scrollTop=logDiv.scrollHeight; } })(); logDiv.insertBefore(line,cursor); if(logDiv.children.length>200) logDiv.removeChild(logDiv.children[0]); }
+    function addLine(text, classes=[], baseSpeed=10){
+      if(typeof classes==="string") classes=[classes];
+      const line=document.createElement("div");
+      line.className=classes.join(" ");
+      let i=0;
+      (function type(){
+        if(i<text.length){ line.textContent+=text.charAt(i++); setTimeout(type, baseSpeed+Math.random()*15); }
+        else { updateCursor(); logDiv.scrollTop=logDiv.scrollHeight; }
+      })();
+      logDiv.insertBefore(line,cursor);
+      if(logDiv.children.length>200) logDiv.removeChild(logDiv.children[0]);
+    }
 
     // ===== Heartbeat + Vibration =====
     let vibrationEnabled=false, vibrationInterval; let audioCtx=null, beatTimer=null, beatIntervalMs=1000;
@@ -90,23 +101,147 @@
       window.addEventListener('click', go, {once:true});
     })();
 
-    const introLines=["Establishing secure connection...","Bypassing system firewall...","Accessing local files...","Extracting stored passwords...","Scanning browser cookies...", ">>> SYSTEM OVERRIDDEN <<<","","⚠ WARNING: Credentials leak detected..."];
+    const introLines=[
+      "Establishing secure connection...",
+      "Bypassing system firewall...",
+      "Accessing local files...",
+      "Extracting stored passwords...",
+      "Scanning browser cookies...",
+      ">>> SYSTEM OVERRIDDEN <<<",
+      "",
+      "⚠ WARNING: Credentials leak detected..."
+    ];
 
-    function logProfile(){ try { const q=new URLSearchParams(location.search); const fromQuery=q.get("name"); if(fromQuery){ localStorage.setItem("profileName",fromQuery); addLine(`[PROFILE] Registered Name: ${fromQuery}`, "fingerprintLog", 10); return; } const saved=localStorage.getItem("profileName"); if(saved){ addLine(`[PROFILE] Registered Name: ${saved}`, "fingerprintLog", 10); return; } } catch(e){} const host=(location.hostname||"").split(".")[0]; const fallback= host && host!=="localhost" ? host.charAt(0).toUpperCase()+host.slice(1) : (navigator.platform||"Administrator"); addLine(`[PROFILE] Registered Name: ${fallback}`, "fingerprintLog", 10); }
-    function logSystemFingerprint(){ const lang=navigator.language; const platform=navigator.platform; const res=`${screen.width}x${screen.height}`; addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10); }
-    function logMoreFingerprint(){ const tz=(Intl.DateTimeFormat().resolvedOptions().timeZone||"N/A"); const dpr=(window.devicePixelRatio||1); const colorDepth=screen.colorDepth; const availRes=`${screen.availWidth}x${screen.availHeight}`; const viewport=`${window.innerWidth}x${window.innerHeight}`; const cores=navigator.hardwareConcurrency||"N/A"; const memory=navigator.deviceMemory?`${navigator.deviceMemory}GB`:"N/A"; const touch=(navigator.maxTouchPoints>0)?`${navigator.maxTouchPoints}-point`:"none"; const langList=(navigator.languages||[navigator.language]).join(", "); const dnt=(navigator.doNotTrack==="1"||window.doNotTrack==="1"||navigator.msDoNotTrack==="1")?"enabled":"disabled"; const online=navigator.onLine?"online":"offline"; const cookies=navigator.cookieEnabled?"enabled":"disabled"; addLine(`[FINGERPRINT] Timezone: ${tz}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Viewport: ${viewport}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Screen avail: ${availRes} @ ${colorDepth}-bit`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Pixel ratio: ${dpr}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] CPU cores: ${cores}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] RAM (approx): ${memory}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Touch: ${touch}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Languages: ${langList}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Do Not Track: ${dnt}`, "fingerprintLog", 10); addLine(`[FINGERPRINT] Cookies: ${cookies} • Network: ${online}`, "fingerprintLog", 10); try{ const c=document.createElement("canvas"); const gl=c.getContext("webgl")||c.getContext("experimental-webgl"); if(gl){ const ext=gl.getExtension("WEBGL_debug_renderer_info"); if(ext){ const vendor=gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)||""; const renderer=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||""; let info=`${vendor} ${renderer}`.trim(); if(info.length > 60) info = info.slice(0,57) + "…"; if(info) addLine(`[FINGERPRINT] GPU: ${info}`, "fingerprintLog", 10); } } }catch(e){} if(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices){ navigator.mediaDevices.enumerateDevices().then(list=>{ const cams=list.filter(d=>d.kind==="videoinput").length; const mics=list.filter(d=>d.kind==="audioinput").length; addLine(`[FINGERPRINT] Devices: ${cams} camera(s), ${mics} mic(s)`, "fingerprintLog", 10); }).catch(()=>{}); } }
-    function logIPandCity(){ fetch("https://ipapi.co/json/").then(r=>r.json()).then(d=>{ addLine(`[NET] Public IP: ${d.ip}`, "grad", 10); addLine(`[TRACE] Location: ${d.city}, ${d.region}, ${d.country_name}`, "grad", 10); addLine(`[NET] ISP: ${d.org}`, "ispLog", 10); }).catch(()=>addLine("[TRACE] Failed to fetch IP/Location data.", "error")); }
+    function logProfile(){
+      try {
+        const q=new URLSearchParams(location.search);
+        const fromQuery=q.get("name");
+        if(fromQuery){ localStorage.setItem("profileName",fromQuery); addLine(`[PROFILE] Registered Name: ${fromQuery}`, "fingerprintLog", 10); return; }
+        const saved=localStorage.getItem("profileName");
+        if(saved){ addLine(`[PROFILE] Registered Name: ${saved}`, "fingerprintLog", 10); return; }
+      } catch(e){}
+      const host=(location.hostname||"").split(".")[0];
+      const fallback= host && host!=="localhost" ? host.charAt(0).toUpperCase()+host.slice(1) : (navigator.platform||"Administrator");
+      addLine(`[PROFILE] Registered Name: ${fallback}`, "fingerprintLog", 10);
+    }
+
+    function logSystemFingerprint(){
+      const lang=navigator.language;
+      const platform=navigator.platform;
+      const res=`${screen.width}x${screen.height}`;
+      addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10);
+    }
+
+    function logMoreFingerprint(){
+      const tz=(Intl.DateTimeFormat().resolvedOptions().timeZone||"N/A");
+      const dpr=(window.devicePixelRatio||1);
+      const colorDepth=screen.colorDepth;
+      const availRes=`${screen.availWidth}x${screen.availHeight}`;
+      const viewport=`${window.innerWidth}x${window.innerHeight}`;
+      const cores=navigator.hardwareConcurrency||"N/A";
+      const memory=navigator.deviceMemory?`${navigator.deviceMemory}GB`:"N/A";
+      const touch=(navigator.maxTouchPoints>0)?`${navigator.maxTouchPoints}-point`:"none";
+      const langList=(navigator.languages||[navigator.language]).join(", ");
+      const dnt=(navigator.doNotTrack==="1"||window.doNotTrack==="1"||navigator.msDoNotTrack==="1")?"enabled":"disabled";
+      const online=navigator.onLine?"online":"offline";
+      const cookies=navigator.cookieEnabled?"enabled":"disabled";
+      addLine(`[FINGERPRINT] Timezone: ${tz}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Viewport: ${viewport}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Screen avail: ${availRes} @ ${colorDepth}-bit`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Pixel ratio: ${dpr}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] CPU cores: ${cores}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] RAM (approx): ${memory}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Touch: ${touch}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Languages: ${langList}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Do Not Track: ${dnt}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Cookies: ${cookies} • Network: ${online}`, "fingerprintLog", 10);
+      try {
+        const c=document.createElement("canvas");
+        const gl=c.getContext("webgl")||c.getContext("experimental-webgl");
+        if(gl){
+          const ext=gl.getExtension("WEBGL_debug_renderer_info");
+          if(ext){
+            const vendor=gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)||"";
+            const renderer=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||"";
+            let info=`${vendor} ${renderer}`.trim();
+            if(info.length > 60) info = info.slice(0,57) + "…";
+            if(info) addLine(`[FINGERPRINT] GPU: ${info}`, "fingerprintLog", 10);
+          }
+        }
+      } catch(e){}
+      if(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices){
+        navigator.mediaDevices.enumerateDevices().then(list=>{
+          const cams=list.filter(d=>d.kind==="videoinput").length;
+          const mics=list.filter(d=>d.kind==="audioinput").length;
+          addLine(`[FINGERPRINT] Devices: ${cams} camera(s), ${mics} mic(s)`, "fingerprintLog", 10);
+        }).catch(()=>{});
+      }
+    }
+
+    function logIPandCity(){
+      fetch("https://ipapi.co/json/")
+        .then(r=>r.json())
+        .then(d=>{
+          addLine(`[NET] Public IP: ${d.ip}`, "grad", 10);
+          addLine(`[TRACE] Location: ${d.city}, ${d.region}, ${d.country_name}`, "grad", 10);
+          addLine(`[NET] ISP: ${d.org}`, "ispLog", 10);
+        })
+        .catch(()=>addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
+    }
+
     function logCurrentTime(){ addLine(`[TRACE] Session started at ${new Date().toLocaleString()}`, "grad", 10); }
 
-    function startSpinner(){ const frames=["|","/","-","\\"]; let i=0; setInterval(()=>{ spinnerEl.textContent="Loading "+frames[i]; i=(i+1)%frames.length; },150); }
+    function startSpinner(){
+      const frames=["|","/","-","\\"]; let i=0;
+      setInterval(()=>{ spinnerEl.textContent="Loading "+frames[i]; i=(i+1)%frames.length; },150);
+    }
 
-    function startFinale(){ startVibration(); setTimeout(()=>{ stopVibration(); initAudio(); spikeHeartbeatThenCalm(); addLine(">>> PERSONAL DATA COMPROMISED <<<","error"); addLine("[ PRESS ANY KEY TO CONTINUE ]",["grad","blink"]); const handler=()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; }; addEventListener("keydown", handler, {once:true}); },1200); }
+    // ✅ FIXED: Properly closed function with only one closing brace; no stray code after it.
+    function startFinale(){
+      startVibration();
+      setTimeout(()=>{
+        stopVibration();
+        initAudio();
+        spikeHeartbeatThenCalm();
+        addLine(">>> PERSONAL DATA COMPROMISED <<<","error");
+        addLine("[ PRESS TAB TO CONTINUE ]",["grad","blink"]);
+        const handler = (e)=>{
+          const isTab = (e.key === 'Tab') || (e.keyCode === 9);
+          if(!isTab) return;
+          e.preventDefault();
+          window.removeEventListener('keydown', handler);
+          location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
+        };
+        window.addEventListener('keydown', handler);
+      },1200);
+    }
 
-    let idx=0; (function typeIntro(){ if(idx<introLines.length){ addLine(introLines[idx++], "grad"); setTimeout(typeIntro, 900); } else { logProfile(); logSystemFingerprint(); logIPandCity(); logCurrentTime(); logMoreFingerprint(); startFinale(); } })();
+    let idx=0;
+    (function typeIntro(){
+      if(idx<introLines.length){
+        addLine(introLines[idx++], "grad");
+        setTimeout(typeIntro, 900);
+      } else {
+        logProfile();
+        logSystemFingerprint();
+        logIPandCity();
+        logCurrentTime();
+        logMoreFingerprint();
+        startFinale();
+      }
+    })();
 
     // ===== RGB MATRIX RAIN — Classic, smooth, configurable =====
-    const canvas=document.getElementById("matrix"); const ctx=canvas.getContext("2d");
-    const speedInput=document.getElementById('speed'); const brightnessInput=document.getElementById('brightness'); const speedVal=document.getElementById('speedVal'); const brightnessVal=document.getElementById('brightnessVal'); const detailInput=document.getElementById('detail');
+    const canvas=document.getElementById("matrix");
+    const ctx=canvas.getContext("2d");
+    const speedInput=document.getElementById('speed');
+    const brightnessInput=document.getElementById('brightness');
+    const speedVal=document.getElementById('speedVal');
+    const brightnessVal=document.getElementById('brightnessVal');
+    const detailInput=document.getElementById('detail');
+
     let speedScale=1.0, brightnessScale=1.0;
     speedInput.oninput = ()=> { const pct = parseInt(speedInput.value,10) || 0; speedScale = 1 + (pct/100); if (speedVal) speedVal.textContent = `+${pct}%`; };
     brightnessInput.oninput = ()=> { const pct = parseInt(brightnessInput.value,10) || 0; brightnessScale = Math.max(0, Math.min(2, pct/100)); if (brightnessVal) brightnessVal.textContent = pct + '%'; };
@@ -179,6 +314,20 @@
     if (brightnessInput) { brightnessInput.dispatchEvent(new Event('input')); }
 
     addEventListener("resize", ()=>{ initColumns(); });
+
+    // Invisible smoke tests (console only; no HUD spam)
+    (function runTests(){
+      try{
+        console.assert(!!document.getElementById('matrix'), 'canvas exists');
+        console.assert(!!document.getElementById('hud'), 'HUD exists');
+        console.assert(typeof addLine==='function', 'addLine available');
+        console.assert(typeof startFinale==='function', 'startFinale available');
+        console.assert(rows>0 && columns>0, 'rows/columns positive after sizeCanvas');
+        const prevCols=columns; const prevFont=fontSize; fontSize = prevFont===14?12:14; sizeCanvas(); initColumns(); const changed=columns!==prevCols; fontSize=prevFont; sizeCanvas(); initColumns(); console.assert(changed, 'columns recompute on detail change');
+        speedInput.value='1000'; speedInput.dispatchEvent(new Event('input')); console.assert(Math.abs(speedScale-11)<1e-9, 'speedScale hits 11x at +1000%');
+        const bInp=document.getElementById('brightness'); bInp.value='200'; bInp.dispatchEvent(new Event('input')); console.assert(Math.abs(brightnessScale-2)<1e-9, 'vibrance 200% => 2x');
+      }catch(e){ console.error('Smoke tests error', e); }
+    })();
 
     startSpinner();
   </script>
