@@ -134,7 +134,15 @@
       const line=document.createElement("div");
       line.className=classes.join(" ");
       let i=0;
-      (function type(){ if(i<text.length){ line.textContent+=text.charAt(i++); setTimeout(type, baseSpeed+Math.random()*15);} else { updateCursor(); logDiv.scrollTop = logDiv.scrollHeight; } })();
+      (function type(){ 
+        if(i<text.length){ 
+          line.textContent+=text.charAt(i++); 
+          setTimeout(type, baseSpeed+Math.random()*15);
+        } else { 
+          updateCursor(); 
+          logDiv.scrollTop = logDiv.scrollHeight; 
+        } 
+      })();
       logDiv.insertBefore(line,cursor);
       if(logDiv.children.length>160) logDiv.removeChild(logDiv.children[0]);
     }
@@ -254,26 +262,28 @@
         logSystemFingerprint();
         logIPandCity();
         logCurrentTime();
-        logMoreFingerprint();  // <— extra fingerprint lines
+        logMoreFingerprint();  // extra fingerprint lines
         startCountdown();
       }
     })();
 
-    // MATRIX RAIN (RGB with comet-like trails)
+    // ===== MATRIX RAIN (Glow → Fade) =====
     const canvas=document.getElementById("matrix");
     const ctx=canvas.getContext("2d");
     function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; }
     sizeCanvas();
 
-    const symbols="☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧"+
-                  "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿"+
-                  "巫鬼魔死血骷魑魍魎"+
-                  "⛧⛤⛥⛦⛨†‡☨☩⸸"+
-                  "♇♆♅♄♃♁☿☽☾"+
-                  "∆∑∏∫∂∇Ω¥ΞЖШФ"+
-                  "◘◙○◉◍◎◈◇◆◊"+
-                  "↑↓←→↔↕↖↗↘↙"+
-                  "!@#$%^&*()_+=-|<>?/".split("");
+    const symbols=(
+      "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧"+
+      "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿"+
+      "巫鬼魔死血骷魑魍魎"+
+      "⛧⛤⛥⛦⛨†‡☨☩⸸"+
+      "♇♆♅♄♃♁☿☽☾"+
+      "∆∑∏∫∂∇Ω¥ΞЖШФ"+
+      "◘◙○◉◍◎◈◇◆◊"+
+      "↑↓←→↔↕↖↗↘↙"+
+      "!@#$%^&*()_+=-|<>?/"
+    ).split("");
 
     const fontSize=16;
     let columns,rows,yPos,speeds,trailLen;
@@ -281,44 +291,62 @@
       columns=Math.floor(canvas.width/fontSize);
       rows=Math.ceil(canvas.height/fontSize);
       yPos=new Array(columns).fill(0).map(()=>Math.random()*rows);
-      speeds=new Array(columns).fill(0).map(()=>0.8+Math.random()*1.8);
-      trailLen=new Array(columns).fill(0).map(()=>5+Math.floor(Math.random()*7));
+      speeds=new Array(columns).fill(0).map(()=>0.9+Math.random()*1.8);
+      trailLen=new Array(columns).fill(0).map(()=>6+Math.floor(Math.random()*8));
     }
     initColumns();
 
     function getSymbol(){ return symbols[(Math.random()*symbols.length)|0]; }
-    let hue=0;
+    let hue=0, glowPhase=0;
 
     function draw(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle="rgba(0,0,0,0.2)";
+      // Lighter overlay so trails persist but stay sharp
+      ctx.fillStyle="rgba(0,0,0,0.05)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
       ctx.font=fontSize+"px Courier New";
+
+      // Pulse value to make heads glow a bit stronger over time
+      glowPhase = (glowPhase + 0.08) % (Math.PI * 2);
+      const glowPulse = 1 + Math.sin(glowPhase) * 0.6; // 0.4..1.6 boost
+
       for(let i=0;i<columns;i++){
         yPos[i]+=speeds[i];
         if(yPos[i]>=rows+trailLen[i]){
           yPos[i]=-Math.random()*rows*0.6;
-          speeds[i]=0.8+Math.random()*1.8;
-          trailLen[i]=5+Math.floor(Math.random()*7);
+          speeds[i]=0.9+Math.random()*1.8;
+          trailLen[i]=6+Math.floor(Math.random()*8);
         }
+
         const baseX=i*fontSize;
         const headRow=Math.floor(yPos[i]);
+
         for(let t=0;t<trailLen[i];t++){
           const row=headRow-t; if(row<0||row>=rows) continue;
           const y=row*fontSize;
-          const alpha=Math.max(0,1 - t/trailLen[i]);
-          const light=t===0?66:48;
-          ctx.fillStyle=`hsla(${(hue+i*15)%360},100%,${light}%,${alpha})`;
+
+          // Tail alpha fades out; head is strongest
+          const alpha = Math.max(0.06, 1 - t/trailLen[i]);
+
+          // Lightness: head brightest, tail dimmer
+          const light = t===0 ? 82 : 58;
+
+          // Slightly stronger glow on head, subtle on tail
+          const blur = t===0 ? 10 * glowPulse : 2;
+
+          ctx.fillStyle=`hsla(${(hue+i*15)%360}, 100%, ${light}%, ${alpha})`;
           ctx.shadowColor=ctx.fillStyle;
-          ctx.shadowBlur=t===0?8:3;
+          ctx.shadowBlur=blur;
+
           ctx.fillText(getSymbol(), baseX, y);
         }
       }
+
       hue=(hue+2)%360;
       requestAnimationFrame(draw);
     }
     requestAnimationFrame(draw);
+
     addEventListener("resize", ()=>{ sizeCanvas(); initColumns(); });
 
     // Start visuals
