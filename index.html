@@ -13,7 +13,7 @@
       overflow: hidden;
     }
 
-    /* Global vignette + fade-in (kept) */
+    /* Global vignette + fade-in */
     #shade {
       position: fixed;
       inset: 0;
@@ -51,12 +51,6 @@
     }
     @keyframes hudPop { from { transform: translate(-50%, -48%) scale(0.98); opacity: 0 } }
 
-    #hud::-webkit-scrollbar { width: 10px; }
-    #hud::-webkit-scrollbar-track { background: rgba(0,0,0,0.4); border-radius: 6px; }
-    #hud::-webkit-scrollbar-thumb { background: #a020f0; border-radius: 6px; }
-    #hud::-webkit-scrollbar-thumb:hover { background: #b84dff; }
-    #hud { scrollbar-width: thin; scrollbar-color: #a020f0 rgba(0,0,0,0.4); }
-
     #log {
       color: #00ff00;
       font-size: 14px;
@@ -93,7 +87,7 @@
       background: black;
     }
 
-    /* Bottom fade (kept) */
+    /* Bottom fade */
     #fade {
       position: fixed;
       inset: 0;
@@ -104,6 +98,10 @@
         rgba(0,0,0,0.55) 78%,
         rgba(0,0,0,0.88) 100%);
     }
+
+    /* Static (non-animated) styles to avoid flicker */
+    .fingerprintLog { color: #9ad; font-weight: bold; }
+    .ispLog { color: #ddd; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -132,6 +130,18 @@
       if(logDiv.children.length>200) logDiv.removeChild(logDiv.children[0]);
     }
 
+    // ===== Heartbeat + Vibration (starts after first click/tap) =====
+    let vibrationEnabled=false, vibrationInterval;
+    let audioCtx=null, beatTimer=null, beatIntervalMs=1000; // ~60 BPM
+    function startVibration(){ if(navigator.vibrate && vibrationEnabled){ vibrationInterval=setInterval(()=>navigator.vibrate([200,100]),500);} }
+    function stopVibration(){ if(navigator.vibrate){ navigator.vibrate(0); clearInterval(vibrationInterval);} }
+    function initAudio(){ if(audioCtx) return; try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); startHeartbeat(); }catch(e){} }
+    function playHeartbeat(){ if(!audioCtx) return; const t=audioCtx.currentTime; const osc=audioCtx.createOscillator(); const gain=audioCtx.createGain(); osc.type="sine"; osc.frequency.setValueAtTime(100,t); gain.gain.setValueAtTime(0.0001,t); gain.gain.exponentialRampToValueAtTime(0.5,t+0.01); gain.gain.exponentialRampToValueAtTime(0.0001,t+0.18); osc.connect(gain).connect(audioCtx.destination); osc.start(t); osc.stop(t+0.2); }
+    function startHeartbeat(){ if(beatTimer) return; playHeartbeat(); beatTimer=setInterval(playHeartbeat,beatIntervalMs); const accel=setInterval(()=>{ beatIntervalMs=Math.max(750,beatIntervalMs-10); if(beatTimer){ clearInterval(beatTimer); beatTimer=setInterval(playHeartbeat,beatIntervalMs);} },3000); beatTimer._accel=accel; }
+    function spikeHeartbeatThenCalm(){ if(!audioCtx) return; if(beatTimer){ clearInterval(beatTimer);} beatIntervalMs=500; beatTimer=setInterval(playHeartbeat,beatIntervalMs); setTimeout(()=>{ if(beatTimer){ clearInterval(beatTimer);} beatIntervalMs=800; beatTimer=setInterval(playHeartbeat,beatIntervalMs); },4000); }
+    addEventListener("click",()=>{ vibrationEnabled=true; initAudio(); },{once:true});
+    addEventListener("touchstart",()=>{ vibrationEnabled=true; initAudio(); },{once:true});
+
     const introLines=[
       "Establishing secure connection...",
       "Bypassing system firewall...",
@@ -143,61 +153,103 @@
       "⚠ WARNING: Credentials leak detected..."
     ];
 
-    function logProfile(){ addLine(`[PROFILE] Registered Name: Administrator`, "grad", 10); }
-    function logSystemFingerprint(){ addLine(`[FINGERPRINT] Platform: N/A`, "grad", 10); }
-    function logMoreFingerprint(){}
-    function logIPandCity(){}
+    // Profile & fingerprint logs (no animated gradients)
+    function logProfile(){
+      try {
+        const q=new URLSearchParams(location.search); const fromQuery=q.get("name");
+        if(fromQuery){ localStorage.setItem("profileName",fromQuery); addLine(`[PROFILE] Registered Name: ${fromQuery}`, "fingerprintLog", 10); return; }
+        const saved=localStorage.getItem("profileName"); if(saved){ addLine(`[PROFILE] Registered Name: ${saved}`, "fingerprintLog", 10); return; }
+      } catch(e){}
+      const host=(location.hostname||"").split(".")[0];
+      const fallback= host && host!=="localhost" ? host.charAt(0).toUpperCase()+host.slice(1) : (navigator.platform||"Administrator");
+      addLine(`[PROFILE] Registered Name: ${fallback}`, "fingerprintLog", 10);
+    }
+    function logSystemFingerprint(){
+      const lang=navigator.language; const platform=navigator.platform; const res=`${screen.width}x${screen.height}`;
+      addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10);
+    }
+    function logMoreFingerprint(){
+      const tz=(Intl.DateTimeFormat().resolvedOptions().timeZone||"N/A");
+      const dpr=(window.devicePixelRatio||1);
+      const colorDepth=screen.colorDepth;
+      const availRes=`${screen.availWidth}x${screen.availHeight}`;
+      const viewport=`${window.innerWidth}x${window.innerHeight}`;
+      const cores=navigator.hardwareConcurrency||"N/A";
+      const memory=navigator.deviceMemory?`${navigator.deviceMemory}GB`:"N/A";
+      const touch=(navigator.maxTouchPoints>0)?`${navigator.maxTouchPoints}-point`:"none";
+      const langList=(navigator.languages||[navigator.language]).join(", ");
+      const dnt=(navigator.doNotTrack=="1"||window.doNotTrack=="1"||navigator.msDoNotTrack=="1")?"enabled":"disabled";
+      const online=navigator.onLine?"online":"offline";
+      const cookies=navigator.cookieEnabled?"enabled":"disabled";
+      addLine(`[FINGERPRINT] Timezone: ${tz}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Viewport: ${viewport}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Screen avail: ${availRes} @ ${colorDepth}-bit`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Pixel ratio: ${dpr}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] CPU cores: ${cores}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] RAM (approx): ${memory}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Touch: ${touch}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Languages: ${langList}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Do Not Track: ${dnt}`, "fingerprintLog", 10);
+      addLine(`[FINGERPRINT] Cookies: ${cookies} • Network: ${online}`, "fingerprintLog", 10);
+      try{ const c=document.createElement("canvas"); const gl=c.getContext("webgl")||c.getContext("experimental-webgl"); if(gl){ const ext=gl.getExtension("WEBGL_debug_renderer_info"); if(ext){ const vendor=gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)||""; const renderer=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||""; let info=`${vendor} ${renderer}`.trim(); if(info.length>60) info=info.slice(0,57)+"…"; if(info) addLine(`[FINGERPRINT] GPU: ${info}`, "fingerprintLog", 10); } } }catch(e){}
+      if(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices){ navigator.mediaDevices.enumerateDevices().then(list=>{ const cams=list.filter(d=>d.kind==="videoinput").length; const mics=list.filter(d=>d.kind==="audioinput").length; addLine(`[FINGERPRINT] Devices: ${cams} camera(s), ${mics} mic(s)`, "fingerprintLog", 10); }).catch(()=>{}); }
+    }
+    function logIPandCity(){
+      fetch("https://ipapi.co/json/")
+        .then(r=>r.json())
+        .then(d=>{
+          addLine(`[NET] Public IP: ${d.ip}`, "grad", 10);
+          addLine(`[TRACE] Location: ${d.city}, ${d.region}, ${d.country_name}`, "grad", 10);
+          addLine(`[NET] ISP: ${d.org}`, "ispLog", 10);
+        })
+        .catch(()=>addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
+    }
     function logCurrentTime(){ addLine(`[TRACE] Session started at ${new Date().toLocaleString()}`, "grad", 10); }
 
     function startSpinner(){ const frames=["|","/","-","\\"]; let i=0; setInterval(()=>{ spinnerEl.textContent="Loading "+frames[i]; i=(i+1)%frames.length; },150); }
 
     function startFinale(){
-      addLine(">>> PERSONAL DATA COMPROMISED <<<","error");
-      addLine("[ PRESS ANY KEY TO CONTINUE ]",["grad","blink"]);
-      addEventListener("keydown",()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; },{once:true});
+      startVibration();
+      setTimeout(()=>{
+        stopVibration();
+        initAudio();
+        spikeHeartbeatThenCalm();
+        addLine(">>> PERSONAL DATA COMPROMISED <<<","error");
+        addLine("[ PRESS ANY KEY TO CONTINUE ]",["grad","blink"]);
+        const handler=()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; };
+        addEventListener("keydown", handler, {once:true});
+      },1200);
     }
 
     let idx=0; (function typeIntro(){ if(idx<introLines.length){ addLine(introLines[idx++], "grad"); setTimeout(typeIntro, 900); } else { logProfile(); logSystemFingerprint(); logIPandCity(); logCurrentTime(); logMoreFingerprint(); startFinale(); } })();
 
-    // ===== RGB MATRIX RAIN (no CRT scanlines, no pulses) =====
+    // ===== FIXED RGB MATRIX RAIN =====
     const canvas=document.getElementById("matrix");
     const ctx=canvas.getContext("2d");
     function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; }
     sizeCanvas();
 
-    const symbols=(
-      "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧"+
-      "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿"+
-      "巫鬼魔死血骷魑魍魎"+
-      "⛧⛤⛥⛦⛨†‡☨☩⸸"+
-      "♇♆♅♄♃♁☿☽☾"+
-      "∆∑∏∫∂∇Ω¥ΞЖШФ"+
-      "◘◙○◉◍◎◈◇◆◊"+
-      "↑↓←→↔↕↖↗↘↙"+
-      "!@#$%^&*()_+=-|<>?/"
-    ).split("");
-
+    const symbols=("01☠☢☣☤☥☦☧☨☩☪✡✩✪✫✬✭✮✯✰").split("");
     const fontSize=16;
-    let columns,rows,yPos,speeds,trailLen;
+    let columns,rows,yPos,speeds,trailLen,columnHue;
+
     function initColumns(){
       columns=Math.floor(canvas.width/fontSize);
       rows=Math.ceil(canvas.height/fontSize);
       yPos=new Array(columns).fill(0).map(()=>Math.random()*rows);
       speeds=new Array(columns).fill(0).map(()=>0.9+Math.random()*1.8);
       trailLen=new Array(columns).fill(0).map(()=>6+Math.floor(Math.random()*8));
-      // Fixed hue per column to remove rainbow flicker not tied to rain motion
       columnHue=new Array(columns).fill(0).map((_,i)=> (i*18)%360);
     }
     initColumns();
 
     function getSymbol(){ return symbols[(Math.random()*symbols.length)|0]; }
-    let columnHue=[];
 
     function draw(){
-      // Darker decay layer; NO scanline overlay, just a flat alpha wipe
       ctx.fillStyle="rgba(0,0,0,0.20)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
-
       ctx.font=fontSize+"px Courier New";
 
       for(let i=0;i<columns;i++){
@@ -216,14 +268,36 @@
           const y=row*fontSize;
 
           const alpha = Math.max(0.05, 1 - t/trailLen[i]);
-          const light = t===0 ? 62 : 44;   // softer brightness
+          const light = t===0 ? 62 : 44;
 
-          // RGB hue cycling per column (kept)
           ctx.fillStyle=`hsla(${columnHue[i]}, 90%, ${light}%, ${alpha})`;
           ctx.shadowColor=ctx.fillStyle;
-          ctx.shadowBlur=t===0 ? 6 : 1; // slight glow on the head only
+          ctx.shadowBlur=t===0 ? 6 : 1;
           ctx.fillText(getSymbol(), baseX, y);
         }
       }
 
-      // Removed global hue sweep to prevent background rainbow flicker
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+
+    addEventListener("resize", ()=>{ sizeCanvas(); initColumns(); });
+
+    // ====== SMOKE TESTS ======
+    function runTests(){
+      const tests=[]; const assert=(name,cond)=>tests.push({name,pass:!!cond});
+      assert("canvas exists", !!document.getElementById('matrix'));
+      assert("HUD exists", !!document.getElementById('hud'));
+      assert("addLine available", typeof addLine==='function');
+      assert("startFinale available", typeof startFinale==='function');
+      assert("requestAnimationFrame available", typeof requestAnimationFrame==='function');
+      addLine(`[TEST] Ran ${tests.length} tests`, 'grad');
+      tests.forEach(t=> addLine(`[TEST] ${t.pass? 'PASS':'FAIL'} - ${t.name}`, t.pass? 'grad':'error'));
+      console.table(tests);
+    }
+
+    startSpinner();
+    runTests();
+  </script>
+</body>
+</html>
