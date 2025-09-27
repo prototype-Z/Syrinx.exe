@@ -121,7 +121,7 @@
       z-index: 5;
     }
 
-    /* Matrix canvas with 3D tilt */
+    /* Matrix canvas with subtle 3D tilt */
     canvas {
       position: fixed;
       inset: 0;
@@ -130,9 +130,13 @@
       z-index: 1;
       background: black;
 
-      /* 3D cyber tilt */
       transform: perspective(900px) rotateX(12deg) rotateY(-8deg) translateY(-1.5vh);
       transform-origin: center top;
+    }
+    @media (max-width: 800px) {
+      canvas {
+        transform: perspective(800px) rotateX(8deg) rotateY(-5deg) translateY(-1vh);
+      }
     }
 
     .pentagram {
@@ -150,13 +154,6 @@
       0% { opacity: 1; transform: scale(1) rotate(0deg); }
       50% { opacity: 0.8; transform: scale(1.3) rotate(20deg); }
       100% { opacity: 0; transform: scale(0.7) rotate(-20deg); }
-    }
-
-    /* reduce tilt on small screens */
-    @media (max-width: 800px) {
-      canvas {
-        transform: perspective(800px) rotateX(8deg) rotateY(-5deg) translateY(-1vh);
-      }
     }
   </style>
 </head>
@@ -290,7 +287,7 @@ HH======#H###############H#######################
       else { startCountdown(10); }
     }
 
-    // ======== MATRIX RAIN with comet trails + speed variation ========
+    // ======== MATRIX RAIN (fixed bright pillar) ========
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas(){ canvas.width = innerWidth; canvas.height = innerHeight; }
@@ -309,12 +306,13 @@ HH======#H###############H#######################
 
     const fontSize = 16;
     let columns, rows, yPos, speeds, trailLen;
+
     function initColumns(){
       columns = Math.floor(canvas.width / fontSize);
       rows = Math.ceil(canvas.height / fontSize);
-      yPos = new Array(columns).fill(0).map(()=> Math.random()*rows);  // start at random row
-      speeds = new Array(columns).fill(0).map(()=> 0.6 + Math.random()*2.2); // speed variation
-      trailLen = new Array(columns).fill(0).map(()=> 6 + Math.floor(Math.random()*10)); // 6..15
+      yPos = new Array(columns).fill(0).map(()=> Math.random() * rows);
+      speeds = new Array(columns).fill(0).map(()=> 0.8 + Math.random()*1.8);      // moderate, varied
+      trailLen = new Array(columns).fill(0).map(()=> 5 + Math.floor(Math.random()*8)); // 5–12
     }
     initColumns();
 
@@ -322,42 +320,42 @@ HH======#H###############H#######################
 
     let hue = 0;
     function draw(){
-      // subtle clear to leave trails in background
+      // translucent clear so trails persist a bit
       ctx.fillStyle = "rgba(0,0,0,0.12)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.font = fontSize + "px Courier New";
 
       for (let i=0;i<columns;i++){
-        // HEAD position (float rows)
         yPos[i] += speeds[i];
+
+        // randomize respawn so no column gets stuck & too bright
         if (yPos[i] >= rows + trailLen[i]) {
-          // reset this column
-          yPos[i] = -Math.random()*rows*0.3;
-          speeds[i] = 0.6 + Math.random()*2.2;
-          trailLen[i] = 6 + Math.floor(Math.random()*10);
+          yPos[i] = -Math.random() * rows * 0.5;        // respawn above screen randomly
+          speeds[i] = 0.8 + Math.random()*1.8;          // new speed
+          trailLen[i] = 5 + Math.floor(Math.random()*8);// new tail length
         }
 
-        // Draw trail from head backward
         const x = i * fontSize;
         const headRow = Math.floor(yPos[i]);
 
+        // draw comet head + fading tail
         for (let t=0; t<trailLen[i]; t++){
           const row = headRow - t;
           if (row < 0 || row >= rows) continue;
 
           const y = row * fontSize;
-          // color: rainbow by column, brighter at head, dimmer in tail
-          const light = t === 0 ? 70 : 50;                      // head brighter
-          const alpha = Math.max(0, 1 - t / trailLen[i]);       // fade tail
+          const alpha = Math.max(0, 1 - t / trailLen[i]);         // fade
+          const light = t === 0 ? 68 : 50;                        // softer head brightness
           ctx.fillStyle = `hsla(${(hue + i*15) % 360}, 100%, ${light}%, ${alpha})`;
 
-          // glow for head, subtle for trail
+          // glow
           ctx.shadowColor = ctx.fillStyle;
-          ctx.shadowBlur = t === 0 ? 14 : 6;
+          ctx.shadowBlur = t === 0 ? 10 : 4;
 
           ctx.fillText(getSymbol(), x, y);
         }
       }
+
       hue = (hue + 2) % 360;
       requestAnimationFrame(draw);
     }
