@@ -16,7 +16,7 @@
     @keyframes shadeFadeIn { to { opacity:1; } }
 
     /* HUD */
-    #hud { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:min(1100px, calc(100vw - 48px)); height:min(78vh, calc(100vh - 48px)); padding:18px 22px; background:rgba(0,0,0,0.62); border:1px solid #a020f0; border-radius:12px; backdrop-filter:blur(2px); z-index:4; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column; box-sizing:border-box; box-shadow:0 12px 60px rgba(0,0,0,0.6); animation:hudPop 300ms ease-out; }
+    #hud { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:min(1100px, calc(100vw - 48px)); height:min(78vh, calc(100vh - 48px)); padding:18px 22px; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); padding-top: calc(18px + env(safe-area-inset-top, 0px)); -webkit-overflow-scrolling: touch; background:rgba(0,0,0,0.62); border:1px solid #a020f0; border-radius:12px; backdrop-filter:blur(2px); z-index:4; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column; box-sizing:border-box; box-shadow:0 12px 60px rgba(0,0,0,0.6); animation:hudPop 300ms ease-out; }
     @keyframes hudPop { from { transform:translate(-50%,-48%) scale(0.98); opacity:0 } }
 
     #log { color:#00ff00; font-size:14px; line-height:1.4; white-space:pre; text-shadow:0 0 6px rgba(0,0,0,0.8); flex:1; }
@@ -25,7 +25,7 @@
     @keyframes blink{ 50%{ opacity:0; } }
     .grad{ color:#00ff00; }
 
-    #spinner { position:fixed; top:8px; left:50%; transform:translateX(-50%); font-weight:bold; color:#ff66cc; z-index:6; text-shadow:0 0 6px rgba(0,0,0,0.8); pointer-events:none; opacity:.75; }
+    #spinner { position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); font-weight: bold; color: #ff66cc; z-index: 6; text-shadow: 0 0 6px rgba(0,0,0,0.8); pointer-events: none; opacity: .75; }
 
     canvas { position:fixed; inset:0; width:100%; height:100%; z-index:1; background:#000; }
 
@@ -36,11 +36,14 @@
     .ispLog { color:#ddd; font-weight:bold; }
 
     /* Tiny control panel */
-    #controls { position:fixed; right:10px; top:10px; z-index:5; background:rgba(0,0,0,0.55); border:1px solid #6d3b99; border-radius:10px; padding:8px 10px; color:#ddd; font-size:12px; display:flex; gap:10px; align-items:center; }
+    #controls { position:fixed; right:10px; top: calc(10px + env(safe-area-inset-top, 0px)); z-index:5; background:rgba(0,0,0,0.55); border:1px solid #6d3b99; border-radius:10px; padding:8px 10px; color:#ddd; font-size:12px; display:flex; gap:10px; align-items:center; }
     #controls label{ display:flex; align-items:center; gap:6px; }
     #controls input[type=range]{ width:110px; }
     #controls .hint{ opacity:.6; margin-left:6px; }
   </style>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
 </head>
 <body>
   <canvas id="matrix"></canvas>
@@ -51,7 +54,7 @@
   <div id="spinner"></div>
   <div id="controls">
     <label>Speed <input id="speed" type="range" min="0" max="1000" step="10" value="0"> <span id="speedVal">+0%</span></label>
-    <label>Density <input id="density" type="range" min="0.7" max="1.4" step="0.05" value="1.00"></label>
+    <label>Vibrance <input id="brightness" type="range" min="0" max="200" step="5" value="100"> <span id="brightnessVal">100%</span></label>
     <label>Detail <input id="detail" type="range" min="10" max="18" step="1" value="14"></label>
     <span class="hint">press C to hide</span>
   </div>
@@ -94,10 +97,10 @@
 
     // ===== RGB MATRIX RAIN — Classic, smooth, configurable =====
     const canvas=document.getElementById("matrix"); const ctx=canvas.getContext("2d");
-    const speedInput=document.getElementById('speed'); const densityInput=document.getElementById('density'); const speedVal=document.getElementById('speedVal'); const detailInput=document.getElementById('detail');
-    let speedScale=1.0, densityScale=1.0;
+    const speedInput=document.getElementById('speed'); const brightnessInput=document.getElementById('brightness'); const speedVal=document.getElementById('speedVal'); const brightnessVal=document.getElementById('brightnessVal'); const detailInput=document.getElementById('detail');
+    let speedScale=1.0, brightnessScale=1.0;
     speedInput.oninput = ()=> { const pct = parseInt(speedInput.value,10) || 0; speedScale = 1 + (pct/100); if (speedVal) speedVal.textContent = `+${pct}%`; };
-    densityInput.oninput = ()=> densityScale = parseFloat(densityInput.value);
+    brightnessInput.oninput = ()=> { const pct = parseInt(brightnessInput.value,10) || 0; brightnessScale = Math.max(0, Math.min(2, pct/100)); if (brightnessVal) brightnessVal.textContent = pct + '%'; };
     detailInput.oninput = ()=> { fontSize = parseInt(detailInput.value,10) || 14; sizeCanvas(); initColumns(); };
     document.addEventListener('keydown', e=>{ if(e.key==='c' || e.key==='C'){ const c=document.getElementById('controls'); c.style.display = (c.style.display==='none')? 'flex':'none'; } });
 
@@ -106,7 +109,16 @@
     let fontSize=14; // adjustable via Detail slider (10–18)
     let columns,rows,yPos,speeds,vel,trailLen,columnHue;
 
-    function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; rows=Math.ceil(canvas.height/fontSize); columns=Math.floor(canvas.width/fontSize); }
+    function sizeCanvas(){
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.style.width = innerWidth + 'px';
+      canvas.style.height = innerHeight + 'px';
+      canvas.width = Math.floor(innerWidth * dpr);
+      canvas.height = Math.floor(innerHeight * dpr);
+      if (ctx && ctx.setTransform) { ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+      rows = Math.ceil(innerHeight / fontSize);
+      columns = Math.floor(innerWidth / fontSize);
+    }
     function initColumns(){ sizeCanvas(); yPos=new Array(columns).fill(0).map(()=>Math.random()*rows); speeds=new Array(columns).fill(0).map(()=> 4.0 + Math.random()*2.0 ); // 4–6 r/s baseline
       vel=new Array(columns).fill(0); trailLen=new Array(columns).fill(0).map(()=> 8 + Math.floor(Math.random()*7) ); // 8–14
       columnHue=new Array(columns).fill(0).map((_,i)=> (i*18)%360); }
@@ -125,15 +137,18 @@
         vel[i] += (target - vel[i]) * (1 - Math.exp(-dt*3));
         yPos[i] += vel[i]*dt;
 
-        const effTrail = Math.max(4, Math.round(trailLen[i]*densityScale));
+        const effTrail = Math.max(4, trailLen[i]);
         if(yPos[i] >= rows + effTrail){ yPos[i] = -Math.random()*rows*0.5; vel[i] = 0; }
 
         const baseX = i*fontSize;
         for(let t=0; t<effTrail; t++){
           const rowPos = yPos[i] - t; if(rowPos<0 || rowPos>=rows) continue; const y=rowPos*fontSize;
           const alpha = Math.max(0.05, 1 - t/effTrail);
-          const light = t===0 ? 60 : 46; // classic brightness
-          ctx.fillStyle = `hsla(${columnHue[i]}, 90%, ${light}%, ${alpha})`;
+          const baseLight = t===0 ? 60 : 46; // base lightness (unchanged by vibrance)
+          const baseSat = 90; // base saturation
+          const sat = Math.max(0, Math.min(100, baseSat * brightnessScale)); // vibrance 0%–200%
+          const light = baseLight;
+          ctx.fillStyle = `hsla(${columnHue[i]}, ${sat}%, ${light}%, ${alpha})`;
           ctx.shadowBlur = 0; // no glow -> no flicker
           ctx.fillText(getSymbol(), baseX, y);
         }
@@ -145,6 +160,7 @@
     // initialize slider label and scale
     if (speedInput) { speedInput.dispatchEvent(new Event('input')); }
     if (detailInput) { detailInput.dispatchEvent(new Event('input')); }
+    if (brightnessInput) { brightnessInput.dispatchEvent(new Event('input')); }
 
     addEventListener("resize", ()=>{ initColumns(); });
 
@@ -164,9 +180,21 @@
       assert("columns recompute on detail change", beforeCols !== afterCols);
       if (speedInput){ speedInput.value = "1000"; speedInput.dispatchEvent(new Event('input')); }
       assert("speedScale hits 11x at +1000%", Math.abs(speedScale - 11) < 1e-9);
+      // Brightness tests
+      if (brightnessInput){ brightnessInput.value = "200"; brightnessInput.dispatchEvent(new Event('input')); }
+      assert("brightnessScale hits 2x at 200%", Math.abs(brightnessScale - 2) < 1e-9);
+      if (brightnessInput){ brightnessInput.value = "0"; brightnessInput.dispatchEvent(new Event('input')); }
+      assert("brightnessScale 0% => 0", Math.abs(brightnessScale - 0) < 1e-9);
       // Controls present
       assert("controls visible", !!document.getElementById('controls'));
       assert("speed value label present", !!document.getElementById('speedVal'));
+      assert("brightness value label present", !!document.getElementById('brightnessVal'));
+      // iOS/PWA support tests
+      const appleCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]');
+      const appleStatus = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+      assert('apple meta present', !!appleCapable && !!appleStatus);
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      assert('canvas DPR scaled', Math.abs(canvas.width - Math.floor(innerWidth * dpr)) <= dpr);
       console.table(tests);
       addLine(`[TEST] Ran ${tests.length} tests`, 'grad');
       tests.forEach(t=> addLine(`[TEST] ${t.pass? 'PASS':'FAIL'} - ${t.name}`, t.pass? 'grad':'error'));
