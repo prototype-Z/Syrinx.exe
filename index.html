@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>System - Syrinx.exe</title>
+  <title>System - Hacked</title>
   <style>
     html, body {
       margin: 0;
@@ -13,6 +13,7 @@
       overflow: hidden;
     }
 
+    /* Consoles: keep layout, remove dark panels */
     #console, #errorConsole {
       position: fixed;
       top: 10px;
@@ -23,7 +24,7 @@
       font-size: 14px;
       line-height: 1.4;
       text-align: left;
-      background: rgba(0, 0, 0, 0.8);
+      background: transparent;            /* ✨ no more dark rectangles */
       border-radius: 6px;
       font-family: monospace;
       word-wrap: break-word;
@@ -31,9 +32,11 @@
       overflow: hidden;
       z-index: 3;
     }
-
     #console { left: 10px; color: #00ff00; }
     #errorConsole { right: 10px; color: #ff3b3b; }
+
+    /* readability glow so text pops over matrix */
+    #console, #errorConsole { text-shadow: 0 0 6px rgba(0,0,0,0.8); }
 
     .glitch { color: red; font-weight: bold; display: block; animation: glitch 1s infinite; }
     .error { color: #ff3b3b; font-weight: bold; display: block; }
@@ -95,7 +98,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.28);       /* lighter so it doesn’t read as a big block */
       border: 1px solid #a020f0;
       font-family: monospace;
       font-size: 14px;
@@ -107,8 +110,8 @@
       text-shadow: 2px 2px #4b0082, 4px 4px #2e003e;
       max-width: 95vw;
       overflow: hidden;
+      backdrop-filter: blur(1px);
     }
-
     #asciiBox pre { margin: 0; font-size: inherit; }
 
     #spinner {
@@ -119,6 +122,7 @@
       font-weight: bold;
       color: #ff66cc;
       z-index: 5;
+      text-shadow: 0 0 6px rgba(0,0,0,0.8);
     }
 
     /* Matrix canvas with subtle 3D tilt */
@@ -129,7 +133,6 @@
       height: 100%;
       z-index: 1;
       background: black;
-
       transform: perspective(900px) rotateX(12deg) rotateY(-8deg) translateY(-1.5vh);
       transform-origin: center top;
     }
@@ -149,7 +152,6 @@
       pointer-events: none;
       text-shadow: 0 0 8px currentColor, 0 0 15px currentColor;
     }
-
     @keyframes fadeOut {
       0% { opacity: 1; transform: scale(1) rotate(0deg); }
       50% { opacity: 0.8; transform: scale(1.3) rotate(20deg); }
@@ -287,7 +289,7 @@ HH======#H###############H#######################
       else { startCountdown(10); }
     }
 
-    // ======== MATRIX RAIN (band-resistant) ========
+    /* MATRIX RAIN (comet trails + speed variation + band fix) */
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas(){ canvas.width = innerWidth; canvas.height = innerHeight; }
@@ -311,8 +313,8 @@ HH======#H###############H#######################
       columns = Math.floor(canvas.width / fontSize);
       rows = Math.ceil(canvas.height / fontSize);
       yPos = new Array(columns).fill(0).map(()=> Math.random() * rows);
-      speeds = new Array(columns).fill(0).map(()=> 0.8 + Math.random()*1.8);       // varied speeds
-      trailLen = new Array(columns).fill(0).map(()=> 5 + Math.floor(Math.random()*7)); // 5–11 (shorter)
+      speeds = new Array(columns).fill(0).map(()=> 0.8 + Math.random()*1.8);
+      trailLen = new Array(columns).fill(0).map(()=> 5 + Math.floor(Math.random()*7));
     }
     initColumns();
 
@@ -322,11 +324,9 @@ HH======#H###############H#######################
     function draw(){
       frame++;
 
-      // Normal fade
+      /* normal fade + periodic deeper fade to prevent build-up */
       ctx.fillStyle = "rgba(0,0,0,0.12)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
-
-      // Periodic deeper fade to erase build-up (every ~2s @ ~60fps)
       if (frame % 120 === 0) {
         ctx.fillStyle = "rgba(0,0,0,0.35)";
         ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -337,33 +337,26 @@ HH======#H###############H#######################
       for (let i=0;i<columns;i++){
         yPos[i] += speeds[i];
 
-        // Random respawn to avoid persistent columns
         if (yPos[i] >= rows + trailLen[i]) {
           yPos[i] = -Math.random() * rows * 0.6;
           speeds[i] = 0.8 + Math.random()*1.8;
           trailLen[i] = 5 + Math.floor(Math.random()*7);
         }
 
-        // --- micro horizontal jitter (breaks paint stacking)
-        const jitter = (Math.sin((frame + i) * 0.6) * 0.25) + (Math.random()*0.2 - 0.1); // ~±0.35px
+        const jitter = (Math.sin((frame + i) * 0.6) * 0.25) + (Math.random()*0.2 - 0.1);
         const baseX = i * fontSize + jitter;
-
         const headRow = Math.floor(yPos[i]);
 
-        // draw comet head + fading tail
         for (let t=0; t<trailLen[i]; t++){
           const row = headRow - t;
           if (row < 0 || row >= rows) continue;
 
           const y = row * fontSize;
-          const alpha = Math.max(0, 1 - t / trailLen[i]);   // fade along tail
-          const light = t === 0 ? 66 : 48;                  // softer head brightness
+          const alpha = Math.max(0, 1 - t / trailLen[i]);
+          const light = t === 0 ? 66 : 48;
           ctx.fillStyle = `hsla(${(hue + i*15) % 360}, 100%, ${light}%, ${alpha})`;
-
-          // glow (lighter to reduce streaking)
           ctx.shadowColor = ctx.fillStyle;
           ctx.shadowBlur = t === 0 ? 8 : 3;
-
           ctx.fillText(getSymbol(), baseX, y);
         }
       }
@@ -375,11 +368,10 @@ HH======#H###############H#######################
 
     addEventListener("resize", () => { sizeCanvas(); initColumns(); });
 
-    // ======== START ========
+    // Start
     showAsciiArt();
     startSpinner();
     typeIntro();
   </script>
 </body>
 </html>
-
