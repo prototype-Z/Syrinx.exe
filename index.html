@@ -185,11 +185,13 @@
       yPos=new Array(columns).fill(0).map(()=>Math.random()*rows);
       speeds=new Array(columns).fill(0).map(()=>0.9+Math.random()*1.8);
       trailLen=new Array(columns).fill(0).map(()=>6+Math.floor(Math.random()*8));
+      // Fixed hue per column to remove rainbow flicker not tied to rain motion
+      columnHue=new Array(columns).fill(0).map((_,i)=> (i*18)%360);
     }
     initColumns();
 
     function getSymbol(){ return symbols[(Math.random()*symbols.length)|0]; }
-    let hue=0;
+    let columnHue=[];
 
     function draw(){
       // Darker decay layer; NO scanline overlay, just a flat alpha wipe
@@ -217,21 +219,11 @@
           const light = t===0 ? 62 : 44;   // softer brightness
 
           // RGB hue cycling per column (kept)
-          ctx.fillStyle=`hsla(${(hue+i*15)%360}, 90%, ${light}%, ${alpha})`;
+          ctx.fillStyle=`hsla(${columnHue[i]}, 90%, ${light}%, ${alpha})`;
           ctx.shadowColor=ctx.fillStyle;
           ctx.shadowBlur=t===0 ? 6 : 1; // slight glow on the head only
           ctx.fillText(getSymbol(), baseX, y);
         }
       }
 
-      hue=(hue+2)%360; // continuous RGB sweep
-      requestAnimationFrame(draw);
-    }
-    requestAnimationFrame(draw);
-
-    addEventListener("resize", ()=>{ sizeCanvas(); initColumns(); });
-
-    startSpinner();
-  </script>
-</body>
-</html>
+      // Removed global hue sweep to prevent background rainbow flicker
