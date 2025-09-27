@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>System - Hacked</title>
   <style>
     html, body {
@@ -13,27 +13,29 @@
       overflow: hidden;
     }
 
-    /* ======= SINGLE CENTER HUD ======= */
+    /* ======= SINGLE CENTER HUD (always fully on-screen) ======= */
     #hud {
       position: fixed;
       left: 50%;
-      top: 8vh;
-      transform: translateX(-50%);
-      width: min(1200px, 86vw);
-      height: 78vh;
-      padding: 18px 22px;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(1100px, calc(100vw - 48px));
+      height: min(78vh, calc(100vh - 48px));
+      padding: calc(18px + env(safe-area-inset-top, 0)) calc(22px + env(safe-area-inset-right, 0))
+               calc(18px + env(safe-area-inset-bottom, 0)) calc(22px + env(safe-area-inset-left, 0));
       background: rgba(0,0,0,0.26);
       border: 1px solid #a020f0;
-      border-radius: 10px;
+      border-radius: 12px;
       backdrop-filter: blur(2px);
       z-index: 4;
-      overflow: hidden;         
+      overflow: hidden;       /* no scrollbars */
       display: flex;
       flex-direction: column;
+      box-sizing: border-box; /* include border in size */
     }
 
     #log {
-      color: #00ff00;           
+      color: #00ff00;
       font-size: 14px;
       line-height: 1.4;
       white-space: pre;
@@ -99,21 +101,23 @@
       max-width: 95vw;
       overflow: hidden;
       backdrop-filter: blur(1px);
+      box-sizing: border-box;
     }
     #asciiBox pre { margin: 0; font-size: inherit; }
 
     #spinner {
       position: fixed;
-      top: 5px;
+      top: 8px;
       left: 50%;
       transform: translateX(-50%);
       font-weight: bold;
       color: #ff66cc;
       z-index: 6;
       text-shadow: 0 0 6px rgba(0,0,0,0.8);
+      pointer-events: none;
     }
 
-    /* Matrix canvas flat (no tilt) */
+    /* Flat matrix canvas */
     canvas {
       position: fixed;
       inset: 0;
@@ -127,11 +131,7 @@
 <body>
   <canvas id="matrix"></canvas>
 
-  <!-- Single Centered HUD -->
-  <div id="hud">
-    <div id="log"></div>
-  </div>
-
+  <div id="hud"><div id="log"></div></div>
   <div id="asciiBox"></div>
   <div id="spinner"></div>
 
@@ -140,34 +140,32 @@
     const asciiBox = document.getElementById("asciiBox");
     const spinnerEl = document.getElementById("spinner");
 
+    // typing cursor
     const cursor = document.createElement("span");
     cursor.id = "cursor";
     cursor.textContent = "_";
     logDiv.appendChild(cursor);
-    function updateCursor() { logDiv.appendChild(cursor); }
+    function updateCursor(){ logDiv.appendChild(cursor); }
 
-    // vibration support
-    let vibrationEnabled = false, vibrationInterval;
+    // vibration
+    let vibrationEnabled=false, vibrationInterval;
     function startVibration(){ if(navigator.vibrate && vibrationEnabled){ vibrationInterval=setInterval(()=>navigator.vibrate([200,100]),500);} }
     function stopVibration(){ if(navigator.vibrate){ navigator.vibrate(0); clearInterval(vibrationInterval);} }
-    document.addEventListener("click", ()=>{vibrationEnabled=true;},{once:true});
-    document.addEventListener("touchstart", ()=>{vibrationEnabled=true;},{once:true});
+    addEventListener("click", ()=>{vibrationEnabled=true;},{once:true});
+    addEventListener("touchstart", ()=>{vibrationEnabled=true;},{once:true});
 
-    function addLine(text, classes = [], baseSpeed = 10) {
-      if (typeof classes === "string") classes = [classes];
-      const line = document.createElement("div");
-      line.className = classes.join(" ");
-      let i = 0;
-      function typeChar(){
-        if(i < text.length){ line.textContent += text.charAt(i++); setTimeout(typeChar, baseSpeed + Math.random()*15); }
-        else updateCursor();
-      }
-      logDiv.insertBefore(line, cursor);
-      typeChar();
-      if (logDiv.children.length > 120) logDiv.removeChild(logDiv.children[0]);
+    // logger
+    function addLine(text, classes=[], baseSpeed=10){
+      if(typeof classes==="string") classes=[classes];
+      const line=document.createElement("div");
+      line.className=classes.join(" ");
+      let i=0;
+      (function type(){ if(i<text.length){ line.textContent+=text.charAt(i++); setTimeout(type, baseSpeed+Math.random()*15);} else updateCursor(); })();
+      logDiv.insertBefore(line,cursor);
+      if(logDiv.children.length>120) logDiv.removeChild(logDiv.children[0]);
     }
 
-    const introLines = [
+    const introLines=[
       "Establishing secure connection...",
       "Bypassing system firewall...",
       "Accessing local files...",
@@ -178,35 +176,31 @@
       "⚠ WARNING: Credentials leak detected..."
     ];
 
-    function logSystemFingerprint() {
-      const ua = navigator.userAgent;
-      const lang = navigator.language;
-      const platform = navigator.platform;
-      const res = `${screen.width}x${screen.height}`;
+    function logSystemFingerprint(){
+      const ua=navigator.userAgent, lang=navigator.language, platform=navigator.platform, res=`${screen.width}x${screen.height}`;
       addLine(`[FINGERPRINT] User-Agent: ${ua}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10);
     }
 
-    function logIPandCity() {
+    function logIPandCity(){
       fetch("https://ipapi.co/json/")
-        .then(res => res.json())
-        .then(data => {
-          addLine(`[NET] Public IP: ${data.ip}`, "grad", 10);
-          addLine(`[TRACE] Location: ${data.city}, ${data.region}, ${data.country_name}`, "grad", 10);
-          addLine(`[NET] ISP: ${data.org}`, "ispLog", 10);
+        .then(r=>r.json())
+        .then(d=>{
+          addLine(`[NET] Public IP: ${d.ip}`, "grad", 10);
+          addLine(`[TRACE] Location: ${d.city}, ${d.region}, ${d.country_name}`, "grad", 10);
+          addLine(`[NET] ISP: ${d.org}`, "ispLog", 10);
         })
-        .catch(() => addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
+        .catch(()=>addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
     }
 
-    function logCurrentTime() {
-      const now = new Date();
-      addLine(`[TRACE] Session started at ${now.toLocaleString()}`, "grad", 10);
+    function logCurrentTime(){
+      addLine(`[TRACE] Session started at ${new Date().toLocaleString()}`, "grad", 10);
     }
 
-    function showAsciiArt() {
-      const art = `
+    function showAsciiArt(){
+      const art=`
                            ______
         |\\_______________ (_____\\\\______________
 HH======#H###############H#######################
@@ -214,121 +208,106 @@ HH======#H###############H#######################
                           ))    \\#H\\       \`"#VLK
                           "      }#H)
       `;
-      asciiBox.innerHTML = "<pre><span class='asciiGrad'>" + art + "</span></pre>";
+      asciiBox.innerHTML="<pre><span class='asciiGrad'>"+art+"</span></pre>";
     }
 
-    function startSpinner() {
-      const frames = ["|", "/", "-", "\\"];
-      let i = 0;
-      setInterval(() => { spinnerEl.textContent = "Loading " + frames[i]; i = (i + 1) % frames.length; }, 150);
+    function startSpinner(){
+      const frames=["|","/","-","\\"]; let i=0;
+      setInterval(()=>{ spinnerEl.textContent="Loading "+frames[i]; i=(i+1)%frames.length; },150);
     }
 
-    function startCountdown(seconds) {
+    function startCountdown(s){
       startVibration();
-      let n = seconds;
-      const t = setInterval(() => {
-        if (n > 0) {
+      let n=s;
+      const t=setInterval(()=>{
+        if(n>0){
           addLine(`System breach in: ${n}...`, "grad");
-          if (n === 9) logSystemFingerprint();
-          if (n === 8) logIPandCity();
-          if (n === 7) logCurrentTime();
+          if(n===9) logSystemFingerprint();
+          if(n===8) logIPandCity();
+          if(n===7) logCurrentTime();
           n--;
         } else {
-          clearInterval(t);
-          stopVibration();
-          addLine(">>> PERSONAL DATA COMPROMISED <<<", "glitch");
-          addLine("[ PRESS ANY KEY TO CONTINUE ]", ["grad", "blink"]);
-          document.addEventListener("keydown", () => {
-            window.location.href = "https://www.youtube.com/watch?v=VSaxZmLko_g";
-          }, { once: true });
+          clearInterval(t); stopVibration();
+          addLine(">>> PERSONAL DATA COMPROMISED <<<","glitch");
+          addLine("[ PRESS ANY KEY TO CONTINUE ]",["grad","blink"]);
+          addEventListener("keydown",()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; },{once:true});
         }
-      }, 1000);
+      },1000);
     }
 
-    let idx = 0;
-    function typeIntro() {
-      if (idx < introLines.length) { addLine(introLines[idx++], "grad"); setTimeout(typeIntro, 1000); }
-      else { startCountdown(10); }
-    }
+    let idx=0;
+    (function typeIntro(){ if(idx<introLines.length){ addLine(introLines[idx++],"grad"); setTimeout(typeIntro,1000);} else { startCountdown(10);} })();
 
-    /* MATRIX RAIN (comet trails + speed variation) */
-    const canvas = document.getElementById("matrix");
-    const ctx = canvas.getContext("2d");
-    function sizeCanvas(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+    // MATRIX RAIN (comet trails + speed variation + band fix)
+    const canvas=document.getElementById("matrix");
+    const ctx=canvas.getContext("2d");
+    function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; }
     sizeCanvas();
 
-    const symbols = "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧"+
-                    "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿"+
-                    "巫鬼魔死血骷魑魍魎"+
-                    "⛧⛤⛥⛦⛨†‡☨☩⸸"+
-                    "♇♆♅♄♃♁☿☽☾"+
-                    "∆∑∏∫∂∇Ω¥ΞЖШФ"+
-                    "◘◙○◉◍◎◈◇◆◊"+
-                    "↑↓←→↔↕↖↗↘↙"+
-                    "!@#$%^&*()_+=-|<>?/"
-                    .split("");
+    const symbols="☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧"+
+                  "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿"+
+                  "巫鬼魔死血骷魑魍魎"+
+                  "⛧⛤⛥⛦⛨†‡☨☩⸸"+
+                  "♇♆♅♄♃♁☿☽☾"+
+                  "∆∑∏∫∂∇Ω¥ΞЖШФ"+
+                  "◘◙○◉◍◎◈◇◆◊"+
+                  "↑↓←→↔↕↖↗↘↙"+
+                  "!@#$%^&*()_+=-|<>?/".split("");
 
-    const fontSize = 16;
-    let columns, rows, yPos, speeds, trailLen, frame=0;
-
+    const fontSize=16;
+    let columns,rows,yPos,speeds,trailLen,frame=0;
     function initColumns(){
-      columns = Math.floor(canvas.width / fontSize);
-      rows = Math.ceil(canvas.height / fontSize);
-      yPos = new Array(columns).fill(0).map(()=> Math.random() * rows);
-      speeds = new Array(columns).fill(0).map(()=> 0.8 + Math.random()*1.8);
-      trailLen = new Array(columns).fill(0).map(()=> 5 + Math.floor(Math.random()*7));
+      columns=Math.floor(canvas.width/fontSize);
+      rows=Math.ceil(canvas.height/fontSize);
+      yPos=new Array(columns).fill(0).map(()=>Math.random()*rows);
+      speeds=new Array(columns).fill(0).map(()=>0.8+Math.random()*1.8);
+      trailLen=new Array(columns).fill(0).map(()=>5+Math.floor(Math.random()*7));
     }
     initColumns();
 
     function getSymbol(){ return symbols[(Math.random()*symbols.length)|0]; }
+    let hue=0;
 
-    let hue = 0;
     function draw(){
       frame++;
-
-      ctx.fillStyle = "rgba(0,0,0,0.12)";
+      ctx.fillStyle="rgba(0,0,0,0.12)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
-      if (frame % 120 === 0) { ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(0,0,canvas.width,canvas.height); }
+      if(frame%120===0){ ctx.fillStyle="rgba(0,0,0,0.35)"; ctx.fillRect(0,0,canvas.width,canvas.height); }
 
-      ctx.font = fontSize + "px Courier New";
+      ctx.font=fontSize+"px Courier New";
 
-      for (let i=0;i<columns;i++){
-        yPos[i] += speeds[i];
-
-        if (yPos[i] >= rows + trailLen[i]) {
-          yPos[i] = -Math.random() * rows * 0.6;
-          speeds[i] = 0.8 + Math.random()*1.8;
-          trailLen[i] = 5 + Math.floor(Math.random()*7);
+      for(let i=0;i<columns;i++){
+        yPos[i]+=speeds[i];
+        if(yPos[i]>=rows+trailLen[i]){
+          yPos[i]=-Math.random()*rows*0.6;
+          speeds[i]=0.8+Math.random()*1.8;
+          trailLen[i]=5+Math.floor(Math.random()*7);
         }
 
-        const baseX = i * fontSize;
-        const headRow = Math.floor(yPos[i]);
+        const baseX=i*fontSize;
+        const headRow=Math.floor(yPos[i]);
 
-        for (let t=0; t<trailLen[i]; t++){
-          const row = headRow - t;
-          if (row < 0 || row >= rows) continue;
-
-          const y = row * fontSize;
-          const alpha = Math.max(0, 1 - t / trailLen[i]);
-          const light = t === 0 ? 66 : 48;
-          ctx.fillStyle = `hsla(${(hue + i*15) % 360}, 100%, ${light}%, ${alpha})`;
-          ctx.shadowColor = ctx.fillStyle;
-          ctx.shadowBlur = t === 0 ? 8 : 3;
+        for(let t=0;t<trailLen[i];t++){
+          const row=headRow-t; if(row<0||row>=rows) continue;
+          const y=row*fontSize;
+          const alpha=Math.max(0,1 - t/trailLen[i]);
+          const light=t===0?66:48;
+          ctx.fillStyle=`hsla(${(hue+i*15)%360},100%,${light}%,${alpha})`;
+          ctx.shadowColor=ctx.fillStyle;
+          ctx.shadowBlur=t===0?8:3;
           ctx.fillText(getSymbol(), baseX, y);
         }
       }
 
-      hue = (hue + 2) % 360;
+      hue=(hue+2)%360;
       requestAnimationFrame(draw);
     }
     requestAnimationFrame(draw);
+    addEventListener("resize", ()=>{ sizeCanvas(); initColumns(); });
 
-    addEventListener("resize", () => { sizeCanvas(); initColumns(); });
-
-    // Start
+    // Start visuals
     showAsciiArt();
     startSpinner();
-    typeIntro();
   </script>
 </body>
 </html>
