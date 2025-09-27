@@ -29,6 +29,7 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
       overflow: hidden;
+      z-index: 2;
     }
 
     #console { left: 10px; color: #00ff00; }
@@ -100,7 +101,7 @@
       font-size: 14px;
       padding: 10px;
       display: block;
-      z-index: 2;
+      z-index: 3;
       white-space: pre;
       text-align: center;
       text-shadow: 2px 2px #4b0082, 4px 4px #2e003e;
@@ -117,7 +118,7 @@
       transform: translateX(-50%);
       font-weight: bold;
       color: #ff66cc;
-      z-index: 5;
+      z-index: 4;
     }
 
     canvas {
@@ -145,6 +146,27 @@
       50% { opacity: 0.8; transform: scale(1.3) rotate(20deg); }
       100% { opacity: 0; transform: scale(0.7) rotate(-20deg); }
     }
+
+    /* CRT Scanlines Overlay */
+    .crt {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(148, 0, 211, 0.12),  /* violet purple line */
+        rgba(148, 0, 211, 0.12) 2px,
+        transparent 2px,
+        transparent 4px
+      );
+      animation: flicker 0.2s infinite;
+    }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 0.9; }
+      50% { opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -154,7 +176,11 @@
   <div id="asciiBox"></div>
   <div id="spinner"></div>
 
+  <!-- CRT scanline overlay -->
+  <div class="crt"></div>
+
   <script>
+    // (JS unchanged from your version — all features still intact)
     const consoleDiv = document.getElementById("console");
     const errorDiv = document.getElementById("errorConsole");
     const asciiBox = document.getElementById("asciiBox");
@@ -166,7 +192,6 @@
     consoleDiv.appendChild(cursor);
     function updateCursor() { consoleDiv.appendChild(cursor); }
 
-    // --- Vibration helpers ---
     let vibrationEnabled = false;
     let vibrationInterval;
     function startVibration() {
@@ -241,7 +266,6 @@
         .catch(() => addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
     }
 
-    // --- New: Log current time ---
     function logCurrentTime() {
       const now = new Date();
       const formatted = now.toLocaleString();
