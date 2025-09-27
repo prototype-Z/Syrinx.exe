@@ -19,9 +19,8 @@
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      width: min(1100px, calc(100vw - 80px));   /* ✅ more breathing room */
-      height: min(78vh, calc(100vh - 80px));    /* ✅ not clipped at edges */
-      padding: 20px;
+      width: min(1100px, calc(100vw - 80px));   /* safe margin */
+      height: min(78vh, calc(100vh - 80px));
       background: rgba(0,0,0,0.26);
       border: 1px solid #a020f0;
       border-radius: 12px;
@@ -39,8 +38,10 @@
       line-height: 1.4;
       white-space: pre;
       text-shadow: 0 0 6px rgba(0,0,0,0.8);
-      overflow: hidden;
+      padding: 12px; /* ✅ padding inside so text never touches outline */
+      overflow-y: auto; /* ✅ keep logs inside box */
       flex: 1;
+      box-sizing: border-box;
     }
 
     .error { color: #ff3b3b; font-weight: bold; display: block; }
@@ -57,14 +58,6 @@
 
     .grad { color: #00ff00; }
 
-    .asciiGrad {
-      background: linear-gradient(90deg, #a020f0, #ff66cc, #a020f0);
-      background-size: 300% 300%;
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      animation: asciiShift 4s ease infinite;
-    }
-    @keyframes asciiShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-
     .fingerprintLog {
       font-weight: bold;
       background: linear-gradient(90deg, crimson, grey, crimson);
@@ -72,7 +65,11 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: fingerprintShift 3s ease infinite;
     }
-    @keyframes fingerprintShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    @keyframes fingerprintShift {
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
+    }
 
     .ispLog {
       font-weight: bold;
@@ -81,28 +78,11 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: ispShift 4s ease infinite;
     }
-    @keyframes ispShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-
-    #asciiBox {
-      position: fixed;
-      top: 58%;  /* ✅ slightly lower so it doesn’t overlap log */
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.28);
-      border: 1px solid #a020f0;
-      font-family: monospace;
-      font-size: 14px;
-      padding: 10px;
-      z-index: 5;
-      white-space: pre;
-      text-align: center;
-      text-shadow: 2px 2px #4b0082, 4px 4px #2e003e;
-      max-width: 95vw;
-      overflow: hidden;
-      backdrop-filter: blur(1px);
-      box-sizing: border-box;
+    @keyframes ispShift {
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
     }
-    #asciiBox pre { margin: 0; font-size: inherit; }
 
     #spinner {
       position: fixed;
@@ -130,12 +110,10 @@
   <canvas id="matrix"></canvas>
 
   <div id="hud"><div id="log"></div></div>
-  <div id="asciiBox"></div>
   <div id="spinner"></div>
 
   <script>
     const logDiv = document.getElementById("log");
-    const asciiBox = document.getElementById("asciiBox");
     const spinnerEl = document.getElementById("spinner");
 
     // cursor
@@ -197,18 +175,6 @@
       addLine(`[TRACE] Session started at ${new Date().toLocaleString()}`, "grad", 10);
     }
 
-    function showAsciiArt(){
-      const art=`
-                           ______
-        |\\_______________ (_____\\\\______________
-HH======#H###############H#######################
-        ' ~""""""""""""""\`##(_))#H\\"""""Y########
-                          ))    \\#H\\       \`"#VLK
-                          "      }#H)
-      `;
-      asciiBox.innerHTML="<pre><span class='asciiGrad'>"+art+"</span></pre>";
-    }
-
     function startSpinner(){
       const frames=["|","/","-","\\"]; let i=0;
       setInterval(()=>{ spinnerEl.textContent="Loading "+frames[i]; i=(i+1)%frames.length; },150);
@@ -236,7 +202,7 @@ HH======#H###############H#######################
     let idx=0;
     (function typeIntro(){ if(idx<introLines.length){ addLine(introLines[idx++],"grad"); setTimeout(typeIntro,1000);} else { startCountdown(10);} })();
 
-    // MATRIX RAIN (with comet trails, hybrid clear)
+    // MATRIX RAIN
     const canvas=document.getElementById("matrix");
     const ctx=canvas.getContext("2d");
     function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; }
@@ -303,7 +269,6 @@ HH======#H###############H#######################
     addEventListener("resize", ()=>{ sizeCanvas(); initColumns(); });
 
     // Start visuals
-    showAsciiArt();
     startSpinner();
   </script>
 </body>
