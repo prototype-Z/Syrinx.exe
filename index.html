@@ -121,6 +121,7 @@
       z-index: 5;
     }
 
+    /* Matrix canvas with 3D tilt */
     canvas {
       position: fixed;
       inset: 0;
@@ -128,6 +129,10 @@
       height: 100%;
       z-index: 1;
       background: black;
+
+      /* 3D cyber tilt */
+      transform: perspective(900px) rotateX(12deg) rotateY(-8deg) translateY(-1.5vh);
+      transform-origin: center top;
     }
 
     .pentagram {
@@ -145,6 +150,13 @@
       0% { opacity: 1; transform: scale(1) rotate(0deg); }
       50% { opacity: 0.8; transform: scale(1.3) rotate(20deg); }
       100% { opacity: 0; transform: scale(0.7) rotate(-20deg); }
+    }
+
+    /* reduce tilt on small screens */
+    @media (max-width: 800px) {
+      canvas {
+        transform: perspective(800px) rotateX(8deg) rotateY(-5deg) translateY(-1vh);
+      }
     }
   </style>
 </head>
@@ -167,6 +179,7 @@
     consoleDiv.appendChild(cursor);
     function updateCursor() { consoleDiv.appendChild(cursor); }
 
+    // Vibration (unlocks on first gesture)
     let vibrationEnabled = false, vibrationInterval;
     function startVibration() {
       if (navigator.vibrate && vibrationEnabled) {
@@ -277,10 +290,12 @@ HH======#H###############H#######################
       else { startCountdown(10); }
     }
 
+    // ======== MATRIX RAIN with comet trails + speed variation ========
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas(){ canvas.width = innerWidth; canvas.height = innerHeight; }
     sizeCanvas();
+
     const symbols = "☠☢☣☤☥☦☧☨☩☪☫☬☭☮☯✝✞✟✠✡✢✣✤✥✦✧"+
                     "✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿"+
                     "巫鬼魔死血骷魑魍魎"+
@@ -291,30 +306,66 @@ HH======#H###############H#######################
                     "↑↓←→↔↕↖↗↘↙"+
                     "!@#$%^&*()_+=-|<>?/"
                     .split("");
+
     const fontSize = 16;
-    let columns = Math.floor(canvas.width / fontSize);
-    let drops = Array(columns).fill(1);
+    let columns, rows, yPos, speeds, trailLen;
+    function initColumns(){
+      columns = Math.floor(canvas.width / fontSize);
+      rows = Math.ceil(canvas.height / fontSize);
+      yPos = new Array(columns).fill(0).map(()=> Math.random()*rows);  // start at random row
+      speeds = new Array(columns).fill(0).map(()=> 0.6 + Math.random()*2.2); // speed variation
+      trailLen = new Array(columns).fill(0).map(()=> 6 + Math.floor(Math.random()*10)); // 6..15
+    }
+    initColumns();
+
+    function getSymbol(){ return symbols[(Math.random()*symbols.length)|0]; }
+
     let hue = 0;
-    function getRandomSymbol(){ return symbols[Math.floor(Math.random()*symbols.length)]; }
     function draw(){
-      ctx.fillStyle = "rgba(0,0,0,0.10)";
+      // subtle clear to leave trails in background
+      ctx.fillStyle = "rgba(0,0,0,0.12)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.font = fontSize + "px Courier New";
-      for (let i=0;i<drops.length;i++){
-        const text = getRandomSymbol();
+
+      for (let i=0;i<columns;i++){
+        // HEAD position (float rows)
+        yPos[i] += speeds[i];
+        if (yPos[i] >= rows + trailLen[i]) {
+          // reset this column
+          yPos[i] = -Math.random()*rows*0.3;
+          speeds[i] = 0.6 + Math.random()*2.2;
+          trailLen[i] = 6 + Math.floor(Math.random()*10);
+        }
+
+        // Draw trail from head backward
         const x = i * fontSize;
-        const y = drops[i] * fontSize;
-        const alpha = 1 - Math.min(1, y / canvas.height);
-        ctx.fillStyle = `hsla(${(hue + i*15) % 360}, 100%, 50%, ${alpha})`;
-        ctx.fillText(text, x, y);
-        if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
-        drops[i]++;
+        const headRow = Math.floor(yPos[i]);
+
+        for (let t=0; t<trailLen[i]; t++){
+          const row = headRow - t;
+          if (row < 0 || row >= rows) continue;
+
+          const y = row * fontSize;
+          // color: rainbow by column, brighter at head, dimmer in tail
+          const light = t === 0 ? 70 : 50;                      // head brighter
+          const alpha = Math.max(0, 1 - t / trailLen[i]);       // fade tail
+          ctx.fillStyle = `hsla(${(hue + i*15) % 360}, 100%, ${light}%, ${alpha})`;
+
+          // glow for head, subtle for trail
+          ctx.shadowColor = ctx.fillStyle;
+          ctx.shadowBlur = t === 0 ? 14 : 6;
+
+          ctx.fillText(getSymbol(), x, y);
+        }
       }
       hue = (hue + 2) % 360;
+      requestAnimationFrame(draw);
     }
-    let matrixInterval = setInterval(draw, 33);
-    addEventListener("resize", () => { sizeCanvas(); columns = Math.floor(canvas.width / fontSize); drops = Array(columns).fill(1); });
+    requestAnimationFrame(draw);
 
+    addEventListener("resize", () => { sizeCanvas(); initColumns(); });
+
+    // ======== START ========
     showAsciiArt();
     startSpinner();
     typeIntro();
