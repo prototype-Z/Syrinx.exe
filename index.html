@@ -27,13 +27,13 @@
       border-radius: 10px;
       backdrop-filter: blur(2px);
       z-index: 4;
-      overflow: hidden;         /* no scrollbars */
+      overflow: hidden;         
       display: flex;
       flex-direction: column;
     }
 
     #log {
-      color: #00ff00;           /* default log color */
+      color: #00ff00;           
       font-size: 14px;
       line-height: 1.4;
       white-space: pre;
@@ -113,7 +113,7 @@
       text-shadow: 0 0 6px rgba(0,0,0,0.8);
     }
 
-    /* Matrix canvas with subtle 3D tilt */
+    /* Matrix canvas flat (no tilt) */
     canvas {
       position: fixed;
       inset: 0;
@@ -121,12 +121,6 @@
       height: 100%;
       z-index: 1;
       background: black;
-      transform: perspective(900px) rotateX(12deg) rotateY(-8deg) translateY(-1.5vh);
-      transform-origin: center top;
-    }
-    @media (max-width: 800px) {
-      #hud { top: 6vh; width: 92vw; height: 76vh; }
-      canvas { transform: perspective(800px) rotateX(8deg) rotateY(-5deg) translateY(-1vh); }
     }
   </style>
 </head>
@@ -146,21 +140,19 @@
     const asciiBox = document.getElementById("asciiBox");
     const spinnerEl = document.getElementById("spinner");
 
-    // cursor for typing effect
     const cursor = document.createElement("span");
     cursor.id = "cursor";
     cursor.textContent = "_";
     logDiv.appendChild(cursor);
     function updateCursor() { logDiv.appendChild(cursor); }
 
-    // Vibration (unlocks on first gesture)
+    // vibration support
     let vibrationEnabled = false, vibrationInterval;
     function startVibration(){ if(navigator.vibrate && vibrationEnabled){ vibrationInterval=setInterval(()=>navigator.vibrate([200,100]),500);} }
     function stopVibration(){ if(navigator.vibrate){ navigator.vibrate(0); clearInterval(vibrationInterval);} }
     document.addEventListener("click", ()=>{vibrationEnabled=true;},{once:true});
     document.addEventListener("touchstart", ()=>{vibrationEnabled=true;},{once:true});
 
-    // unified logger (errors just add .error class)
     function addLine(text, classes = [], baseSpeed = 10) {
       if (typeof classes === "string") classes = [classes];
       const line = document.createElement("div");
@@ -259,7 +251,7 @@ HH======#H###############H#######################
       else { startCountdown(10); }
     }
 
-    /* MATRIX RAIN (comet trails + speed variation + band fix) */
+    /* MATRIX RAIN (comet trails + speed variation) */
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
     function sizeCanvas(){ canvas.width = innerWidth; canvas.height = innerHeight; }
@@ -309,8 +301,7 @@ HH======#H###############H#######################
           trailLen[i] = 5 + Math.floor(Math.random()*7);
         }
 
-        const jitter = (Math.sin((frame + i) * 0.6) * 0.25) + (Math.random()*0.2 - 0.1);
-        const baseX = i * fontSize + jitter;
+        const baseX = i * fontSize;
         const headRow = Math.floor(yPos[i]);
 
         for (let t=0; t<trailLen[i]; t++){
