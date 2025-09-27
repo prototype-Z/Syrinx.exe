@@ -13,7 +13,7 @@
       overflow: hidden;
     }
 
-    /* ======= CONSOLE BOX ======= */
+    /* ======= SINGLE CENTER HUD ======= */
     #hud {
       position: fixed;
       left: 50%;
@@ -21,14 +21,14 @@
       transform: translate(-50%, -50%);
       width: min(1100px, calc(100vw - 48px));
       height: min(78vh, calc(100vh - 48px));
-      padding: 18px;
+      padding: 18px 22px;
       background: rgba(0,0,0,0.26);
       border: 1px solid #a020f0;
       border-radius: 12px;
       backdrop-filter: blur(2px);
       z-index: 4;
-      overflow-y: auto;   /* allow vertical scrolling only */
-      overflow-x: hidden; /* prevent sideways scroll */
+      overflow-y: auto;
+      overflow-x: hidden;
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
@@ -38,15 +38,14 @@
       color: #00ff00;
       font-size: 14px;
       line-height: 1.4;
-      white-space: pre-wrap;
+      white-space: pre;
       text-shadow: 0 0 6px rgba(0,0,0,0.8);
       flex: 1;
     }
 
-    .error { color: #ff3b3b; font-weight: bold; }
-    .glitchRight { color: red; font-weight: bold; animation: glitch 1s infinite; text-align: right; }
-    .blinkRight { animation: blink 1s steps(1) infinite; text-align: right; display: block; }
-    .breachRight { color: #00ff00; text-align: right; }
+    .error { color: #ff3b3b; font-weight: bold; display: block; }
+    .blink  { animation: blink 1s steps(1) infinite; display: block; }
+    .glitch { color: red; font-weight: bold; display: block; animation: glitch 1s infinite; }
 
     @keyframes blink { 50% { opacity: 0; } }
     @keyframes glitch {
@@ -56,6 +55,7 @@
     }
 
     .grad { color: #00ff00; }
+
     .fingerprintLog {
       font-weight: bold;
       background: linear-gradient(90deg, crimson, grey, crimson);
@@ -63,10 +63,10 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: fingerprintShift 3s ease infinite;
     }
-    @keyframes fingerprintShift {
-      0%{background-position:0% 50%}
-      50%{background-position:100% 50%}
-      100%{background-position:0% 50%}
+    @keyframes fingerprintShift { 
+      0%{background-position:0% 50%} 
+      50%{background-position:100% 50%} 
+      100%{background-position:0% 50%} 
     }
 
     .ispLog {
@@ -76,10 +76,10 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: ispShift 4s ease infinite;
     }
-    @keyframes ispShift {
-      0%{background-position:0% 50%}
-      50%{background-position:100% 50%}
-      100%{background-position:0% 50%}
+    @keyframes ispShift { 
+      0%{background-position:0% 50%} 
+      50%{background-position:100% 50%} 
+      100%{background-position:0% 50%} 
     }
 
     #spinner {
@@ -133,19 +133,10 @@
       if(typeof classes==="string") classes=[classes];
       const line=document.createElement("div");
       line.className=classes.join(" ");
-      line.style.margin = "0";
-      line.style.padding = "0";
       let i=0;
-      (function type(){
-        if(i<text.length){
-          line.textContent+=text.charAt(i++);
-          setTimeout(type, baseSpeed+Math.random()*5);
-        } else {
-          updateCursor();
-          logDiv.scrollTop = logDiv.scrollHeight; // auto-scroll
-        }
-      })();
+      (function type(){ if(i<text.length){ line.textContent+=text.charAt(i++); setTimeout(type, baseSpeed+Math.random()*15);} else updateCursor(); })();
       logDiv.insertBefore(line,cursor);
+      if(logDiv.children.length>120) logDiv.removeChild(logDiv.children[0]);
     }
 
     const introLines=[
@@ -160,7 +151,7 @@
     ];
 
     function logSystemFingerprint(){
-      const platform=navigator.platform, res=`${screen.width}x${screen.height}`, lang=navigator.language;
+      const lang=navigator.language, platform=navigator.platform, res=`${screen.width}x${screen.height}`;
       addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10);
       addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10);
@@ -186,27 +177,28 @@
       setInterval(()=>{ spinnerEl.textContent="Loading "+frames[i]; i=(i+1)%frames.length; },150);
     }
 
-    function startCountdown(s){
+    function startCountdown() {
       startVibration();
-      let n=s;
-      const t=setInterval(()=>{
-        if(n>0){
-          addLine(`System breach in: ${n}...`, "breachRight", 5);
-          if(n===9) logSystemFingerprint();
-          if(n===8) logIPandCity();
-          if(n===7) logCurrentTime();
-          n--;
-        } else {
-          clearInterval(t); stopVibration();
-          addLine(">>> PERSONAL DATA COMPROMISED <<<","glitchRight",5);
-          addLine("[ PRESS ANY KEY TO CONTINUE ]","blinkRight",5);
-          addEventListener("keydown",()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; },{once:true});
-        }
-      },1000);
+      setTimeout(() => {
+        stopVibration();
+        addLine(">>> PERSONAL DATA COMPROMISED <<<","glitch");
+        addLine("[ PRESS ANY KEY TO CONTINUE ]",["grad","blink"]);
+        addEventListener("keydown",()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; },{once:true});
+      }, 2000);
     }
 
     let idx=0;
-    (function typeIntro(){ if(idx<introLines.length){ addLine(introLines[idx++],"grad"); setTimeout(typeIntro,1000);} else { startCountdown(10);} })();
+    (function typeIntro(){ 
+      if(idx<introLines.length){ 
+        addLine(introLines[idx++],"grad"); 
+        setTimeout(typeIntro,1000);
+      } else { 
+        logSystemFingerprint();
+        logIPandCity();
+        logCurrentTime();
+        startCountdown();
+      } 
+    })();
 
     // MATRIX RAIN
     const canvas=document.getElementById("matrix");
@@ -274,6 +266,7 @@
     requestAnimationFrame(draw);
     addEventListener("resize", ()=>{ sizeCanvas(); initColumns(); });
 
+    // Start visuals
     startSpinner();
   </script>
 </body>
