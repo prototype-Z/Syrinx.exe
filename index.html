@@ -7,13 +7,27 @@
   <style>
     html, body {
       margin: 0;
-      background: black;
+      background: #000;
       font-family: "Courier New", monospace;
       height: 100%;
-      overflow: hidden; /* no page scrollbars */
+      overflow: hidden;
     }
 
-    /* ======= SINGLE CENTER HUD (console) ======= */
+    /* Global vignette + fade-in (kept) */
+    #shade {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        radial-gradient(120% 80% at 50% 60%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.25) 45%, rgba(0,0,0,0.7) 100%),
+        linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.55));
+      opacity: 0;
+      animation: shadeFadeIn 900ms ease-out 200ms forwards;
+    }
+    @keyframes shadeFadeIn { to { opacity: 1; } }
+
+    /* HUD */
     #hud {
       position: fixed;
       left: 50%;
@@ -22,30 +36,25 @@
       width: min(1100px, calc(100vw - 48px));
       height: min(78vh, calc(100vh - 48px));
       padding: 18px 22px;
-      background: rgba(0,0,0,0.32); /* slightly darker */
+      background: rgba(0,0,0,0.55);
       border: 1px solid #a020f0;
       border-radius: 12px;
       backdrop-filter: blur(2px);
       z-index: 4;
-      overflow-y: auto;   /* vertical scroll inside box */
-      overflow-x: hidden; /* prevent horizontal scroll */
+      overflow-y: auto;
+      overflow-x: hidden;
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
+      box-shadow: 0 12px 60px rgba(0,0,0,0.6);
+      animation: hudPop 300ms ease-out;
     }
+    @keyframes hudPop { from { transform: translate(-50%, -48%) scale(0.98); opacity: 0 } }
 
-    /* ===== Scrollbar Styling (purple) ===== */
     #hud::-webkit-scrollbar { width: 10px; }
-    #hud::-webkit-scrollbar-track {
-      background: rgba(0,0,0,0.4);
-      border-radius: 6px;
-    }
-    #hud::-webkit-scrollbar-thumb {
-      background: #a020f0;  /* violet */
-      border-radius: 6px;
-    }
+    #hud::-webkit-scrollbar-track { background: rgba(0,0,0,0.4); border-radius: 6px; }
+    #hud::-webkit-scrollbar-thumb { background: #a020f0; border-radius: 6px; }
     #hud::-webkit-scrollbar-thumb:hover { background: #b84dff; }
-    /* Firefox */
     #hud { scrollbar-width: thin; scrollbar-color: #a020f0 rgba(0,0,0,0.4); }
 
     #log {
@@ -59,42 +68,8 @@
 
     .error { color: #ff3b3b; font-weight: bold; display: block; }
     .blink  { animation: blink 1s steps(1) infinite; display: block; }
-    .glitch { color: red; font-weight: bold; display: block; animation: glitch 1s infinite; }
-
     @keyframes blink { 50% { opacity: 0; } }
-    @keyframes glitch {
-      0%   { text-shadow: 2px 0 red; }
-      50%  { text-shadow: -2px 0 purple; }
-      100% { text-shadow: 2px 0 red; }
-    }
-
     .grad { color: #00ff00; }
-
-    .fingerprintLog {
-      font-weight: bold;
-      background: linear-gradient(90deg, crimson, grey, crimson);
-      background-size: 300% 300%;
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      animation: fingerprintShift 3s ease infinite;
-    }
-    @keyframes fingerprintShift {
-      0%{background-position:0% 50%}
-      50%{background-position:100% 50%}
-      100%{background-position:0% 50%}
-    }
-
-    .ispLog {
-      font-weight: bold;
-      background: linear-gradient(90deg, white, black, white);
-      background-size: 300% 300%;
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      animation: ispShift 4s ease infinite;
-    }
-    @keyframes ispShift {
-      0%{background-position:0% 50%}
-      50%{background-position:100% 50%}
-      100%{background-position:0% 50%}
-    }
 
     #spinner {
       position: fixed;
@@ -106,6 +81,7 @@
       z-index: 6;
       text-shadow: 0 0 6px rgba(0,0,0,0.8);
       pointer-events: none;
+      opacity: 0.75;
     }
 
     canvas {
@@ -117,21 +93,22 @@
       background: black;
     }
 
-    /* Bottom fade overlay (sits above canvas, below HUD) */
+    /* Bottom fade (kept) */
     #fade {
       position: fixed;
       inset: 0;
       z-index: 2;
       pointer-events: none;
       background: linear-gradient(to bottom,
-        rgba(0,0,0,0) 60%,
-        rgba(0,0,0,0.35) 80%,
-        rgba(0,0,0,0.65) 100%);
+        rgba(0,0,0,0) 55%,
+        rgba(0,0,0,0.55) 78%,
+        rgba(0,0,0,0.88) 100%);
     }
   </style>
 </head>
 <body>
   <canvas id="matrix"></canvas>
+  <div id="shade"></div>
   <div id="fade"></div>
 
   <div id="hud"><div id="log"></div></div>
@@ -141,83 +118,16 @@
     const logDiv = document.getElementById("log");
     const spinnerEl = document.getElementById("spinner");
 
-    // cursor
+    // Cursor
     const cursor = document.createElement("span");
-    cursor.id = "cursor";
-    cursor.textContent = "_";
-    logDiv.appendChild(cursor);
+    cursor.id = "cursor"; cursor.textContent = "_"; logDiv.appendChild(cursor);
     function updateCursor(){ logDiv.appendChild(cursor); }
 
-    // ===== Heartbeat audio (starts after first tap/click) =====
-    let vibrationEnabled=false, vibrationInterval;
-    let audioCtx = null, beatTimer = null, beatIntervalMs = 1000; // ~60 BPM
-    function startVibration(){ if(navigator.vibrate && vibrationEnabled){ vibrationInterval=setInterval(()=>navigator.vibrate([200,100]),500);} }
-    function stopVibration(){ if(navigator.vibrate){ navigator.vibrate(0); clearInterval(vibrationInterval);} }
-
-    function initAudio(){
-      if (audioCtx) return;
-      try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        startHeartbeat();
-      } catch(e){}
-    }
-
-    function playHeartbeat(){
-      if (!audioCtx) return;
-      const t = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(100, t);
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.5, t+0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t+0.18);
-      osc.connect(gain).connect(audioCtx.destination);
-      osc.start(t);
-      osc.stop(t+0.2);
-    }
-
-    function startHeartbeat(){
-      if (beatTimer) return;
-      playHeartbeat();
-      beatTimer = setInterval(playHeartbeat, beatIntervalMs);
-      const accel = setInterval(()=>{
-        beatIntervalMs = Math.max(750, beatIntervalMs - 10);
-        if (beatTimer) { clearInterval(beatTimer); beatTimer = setInterval(playHeartbeat, beatIntervalMs); }
-      }, 3000);
-      beatTimer._accel = accel;
-    }
-
-    function spikeHeartbeatThenCalm(){
-      if (!audioCtx) return;
-      if (beatTimer) { clearInterval(beatTimer); }
-      beatIntervalMs = 500;
-      beatTimer = setInterval(playHeartbeat, beatIntervalMs);
-      setTimeout(()=>{
-        if (beatTimer) { clearInterval(beatTimer); }
-        beatIntervalMs = 800;
-        beatTimer = setInterval(playHeartbeat, beatIntervalMs);
-      }, 4000);
-    }
-
-    addEventListener("click", ()=>{ vibrationEnabled=true; initAudio(); }, {once:true});
-    addEventListener("touchstart", ()=>{ vibrationEnabled=true; initAudio(); }, {once:true});
-
-    // ===== Logging helpers =====
+    // Logging helper
     function addLine(text, classes=[], baseSpeed=10){
       if(typeof classes==="string") classes=[classes];
-      const line=document.createElement("div");
-      line.className=classes.join(" ");
-      let i=0;
-      (function type(){ 
-        if(i<text.length){ 
-          line.textContent+=text.charAt(i++); 
-          setTimeout(type, baseSpeed+Math.random()*15);
-        } else { 
-          updateCursor(); 
-          logDiv.scrollTop = logDiv.scrollHeight; 
-        } 
-      })();
+      const line=document.createElement("div"); line.className=classes.join(" ");
+      let i=0; (function type(){ if(i<text.length){ line.textContent+=text.charAt(i++); setTimeout(type, baseSpeed+Math.random()*15); } else { updateCursor(); logDiv.scrollTop=logDiv.scrollHeight; } })();
       logDiv.insertBefore(line,cursor);
       if(logDiv.children.length>200) logDiv.removeChild(logDiv.children[0]);
     }
@@ -233,137 +143,23 @@
       "⚠ WARNING: Credentials leak detected..."
     ];
 
-    // === User profile mimic ===
-    function getProfileName(){
-      try {
-        const q = new URLSearchParams(location.search);
-        const fromQuery = q.get("name");
-        if (fromQuery) {
-          localStorage.setItem("profileName", fromQuery);
-          return fromQuery;
-        }
-        const saved = localStorage.getItem("profileName");
-        if (saved) return saved;
-      } catch(e){}
-      const host = (location.hostname || "").split(".")[0];
-      if (host && host !== "localhost") return host.charAt(0).toUpperCase()+host.slice(1);
-      const platform = (navigator.platform || "").trim();
-      if (platform) return platform;
-      return "Administrator";
-    }
-    function logProfile(){ addLine(`[PROFILE] Registered Name: ${getProfileName()}`, "fingerprintLog", 10); }
-
-    // Fingerprint basics
-    function logSystemFingerprint(){
-      const lang=navigator.language;
-      const platform=navigator.platform;
-      const res=`${screen.width}x${screen.height}`;
-      addLine(`[FINGERPRINT] Platform: ${platform}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Resolution: ${res}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Language: ${lang}`, "fingerprintLog", 10);
-    }
-
-    // Extended fingerprint (short/clean)
-    function logMoreFingerprint(){
-      const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "N/A");
-      const dpr = (window.devicePixelRatio || 1);
-      const colorDepth = screen.colorDepth;
-      const availRes = `${screen.availWidth}x${screen.availHeight}`;
-      const viewport = `${window.innerWidth}x${window.innerHeight}`;
-      const cores = navigator.hardwareConcurrency || "N/A";
-      const memory = navigator.deviceMemory ? `${navigator.deviceMemory}GB` : "N/A";
-      const touch = (navigator.maxTouchPoints>0) ? `${navigator.maxTouchPoints}-point` : "none";
-      const langList = (navigator.languages || [navigator.language]).join(", ");
-      const dnt = (navigator.doNotTrack=="1" || window.doNotTrack=="1" || navigator.msDoNotTrack=="1") ? "enabled" : "disabled";
-      const online = navigator.onLine ? "online" : "offline";
-      const cookies = navigator.cookieEnabled ? "enabled" : "disabled";
-
-      addLine(`[FINGERPRINT] Timezone: ${tz}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Viewport: ${viewport}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Screen avail: ${availRes} @ ${colorDepth}-bit`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Pixel ratio: ${dpr}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] CPU cores: ${cores}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] RAM (approx): ${memory}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Touch: ${touch}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Languages: ${langList}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Do Not Track: ${dnt}`, "fingerprintLog", 10);
-      addLine(`[FINGERPRINT] Cookies: ${cookies} • Network: ${online}`, "fingerprintLog", 10);
-
-      try {
-        const c = document.createElement("canvas");
-        const gl = c.getContext("webgl") || c.getContext("experimental-webgl");
-        if (gl) {
-          const ext = gl.getExtension("WEBGL_debug_renderer_info");
-          if (ext) {
-            const vendor = gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) || "";
-            const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || "";
-            let info = `${vendor} ${renderer}`.trim();
-            if (info.length > 60) info = info.slice(0,57) + "…";
-            if (info) addLine(`[FINGERPRINT] GPU: ${info}`, "fingerprintLog", 10);
-          }
-        }
-      } catch(e) {}
-
-      if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-        navigator.mediaDevices.enumerateDevices().then(list=>{
-          const cams = list.filter(d=>d.kind==="videoinput").length;
-          const mics = list.filter(d=>d.kind==="audioinput").length;
-          addLine(`[FINGERPRINT] Devices: ${cams} camera(s), ${mics} mic(s)`, "fingerprintLog", 10);
-        }).catch(()=>{});
-      }
-    }
-
-    // IP + location
-    function logIPandCity(){
-      fetch("https://ipapi.co/json/")
-        .then(r=>r.json())
-        .then(d=>{
-          addLine(`[NET] Public IP: ${d.ip}`, "grad", 10);
-          addLine(`[TRACE] Location: ${d.city}, ${d.region}, ${d.country_name}`, "grad", 10);
-          addLine(`[NET] ISP: ${d.org}`, "ispLog", 10);
-        })
-        .catch(()=>addLine("[TRACE] Failed to fetch IP/Location data.", "error"));
-    }
-
-    // time
+    function logProfile(){ addLine(`[PROFILE] Registered Name: Administrator`, "grad", 10); }
+    function logSystemFingerprint(){ addLine(`[FINGERPRINT] Platform: N/A`, "grad", 10); }
+    function logMoreFingerprint(){}
+    function logIPandCity(){}
     function logCurrentTime(){ addLine(`[TRACE] Session started at ${new Date().toLocaleString()}`, "grad", 10); }
 
-    // spinner
-    function startSpinner(){
-      const frames=["|","/","-","\\"];
-      let i=0;
-      setInterval(()=>{ spinnerEl.textContent="Loading "+frames[i]; i=(i+1)%frames.length; },150);
+    function startSpinner(){ const frames=["|","/","-","\\"]; let i=0; setInterval(()=>{ spinnerEl.textContent="Loading "+frames[i]; i=(i+1)%frames.length; },150); }
+
+    function startFinale(){
+      addLine(">>> PERSONAL DATA COMPROMISED <<<","error");
+      addLine("[ PRESS ANY KEY TO CONTINUE ]",["grad","blink"]);
+      addEventListener("keydown",()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; },{once:true});
     }
 
-    // Finale only (no numeric countdown)
-    function startFinale() {
-      startVibration();
-      setTimeout(() => {
-        stopVibration();
-        spikeHeartbeatThenCalm();
-        addLine(">>> PERSONAL DATA COMPROMISED <<<","glitch");
-        addLine("[ PRESS ANY KEY TO CONTINUE ]",["grad","blink"]);
-        addEventListener("keydown",()=>{ location.href="https://www.youtube.com/watch?v=VSaxZmLko_g"; },{once:true});
-      }, 1200);
-    }
+    let idx=0; (function typeIntro(){ if(idx<introLines.length){ addLine(introLines[idx++], "grad"); setTimeout(typeIntro, 900); } else { logProfile(); logSystemFingerprint(); logIPandCity(); logCurrentTime(); logMoreFingerprint(); startFinale(); } })();
 
-    // Intro typing, then logs, then finale
-    let idx=0;
-    (function typeIntro(){
-      if(idx<introLines.length){
-        addLine(introLines[idx++], "grad");
-        setTimeout(typeIntro, 900);
-      } else {
-        logProfile();
-        logSystemFingerprint();
-        logIPandCity();
-        logCurrentTime();
-        logMoreFingerprint();
-        startFinale();
-      }
-    })();
-
-    // ===== MATRIX RAIN (darker + bottom fade + white pulse) =====
+    // ===== RGB MATRIX RAIN (no CRT scanlines, no pulses) =====
     const canvas=document.getElementById("matrix");
     const ctx=canvas.getContext("2d");
     function sizeCanvas(){ canvas.width=innerWidth; canvas.height=innerHeight; }
@@ -393,25 +189,14 @@
     initColumns();
 
     function getSymbol(){ return symbols[(Math.random()*symbols.length)|0]; }
-    let hue=0, glowPhase=0;
-
-    // Pulse control: every ~30s, flash to white for ~1200ms
-    let pulseUntil = 0;
-    setInterval(()=>{ pulseUntil = performance.now() + 1200; }, 30000);
+    let hue=0;
 
     function draw(){
-      /* darker overlay -> overall darker look */
-      ctx.fillStyle="rgba(0,0,0,0.12)";
+      // Darker decay layer; NO scanline overlay, just a flat alpha wipe
+      ctx.fillStyle="rgba(0,0,0,0.20)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
       ctx.font=fontSize+"px Courier New";
-
-      const now = performance.now();
-      const pulsing = now < pulseUntil;
-
-      // Pulse glow
-      glowPhase = (glowPhase + 0.08) % (Math.PI * 2);
-      const glowPulse = 1 + Math.sin(glowPhase) * 0.6;
 
       for(let i=0;i<columns;i++){
         yPos[i]+=speeds[i];
@@ -429,28 +214,23 @@
           const y=row*fontSize;
 
           const alpha = Math.max(0.05, 1 - t/trailLen[i]);
-          const light = t===0 ? 70 : 46;        /* dimmer head & tail */
-          const blur  = t===0 ? 8 * glowPulse : 1.5;
+          const light = t===0 ? 62 : 44;   // softer brightness
 
-          if (pulsing) {
-            ctx.fillStyle = `hsla(0, 0%, 90%, ${alpha})`; /* softer white */
-          } else {
-            ctx.fillStyle=`hsla(${(hue+i*15)%360}, 90%, ${light}%, ${alpha})`;
-          }
+          // RGB hue cycling per column (kept)
+          ctx.fillStyle=`hsla(${(hue+i*15)%360}, 90%, ${light}%, ${alpha})`;
           ctx.shadowColor=ctx.fillStyle;
-          ctx.shadowBlur=blur;
+          ctx.shadowBlur=t===0 ? 6 : 1; // slight glow on the head only
           ctx.fillText(getSymbol(), baseX, y);
         }
       }
 
-      if (!pulsing) hue=(hue+2)%360;
+      hue=(hue+2)%360; // continuous RGB sweep
       requestAnimationFrame(draw);
     }
     requestAnimationFrame(draw);
 
     addEventListener("resize", ()=>{ sizeCanvas(); initColumns(); });
 
-    // Start visuals
     startSpinner();
   </script>
 </body>
